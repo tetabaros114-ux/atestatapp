@@ -2,31 +2,52 @@ import Link from 'next/link'
 
 export default function CancelPage() {
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      <nav className="bg-[#1e3a5f] text-white px-6 py-4 shadow-md">
-        <a href="/" className="text-xl font-bold">
-          Atestat<span className="text-amber-400">App</span>
-        </a>
+    <div className="min-h-screen bg-[#0a0a0a] flex flex-col">
+      {/* Navbar */}
+      <nav className="fixed top-0 inset-x-0 z-50 border-b border-white/5 bg-[#0a0a0a]/90 backdrop-blur-md">
+        <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+          <Link href="/" className="text-xl font-bold tracking-tight">
+            Atestat<span className="brand-green">App</span>
+          </Link>
+        </div>
       </nav>
 
-      <div className="flex-1 flex items-center justify-center px-4 py-12">
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-10 max-w-md w-full text-center">
-          <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-6">
-            <span className="text-yellow-600 text-3xl">!</span>
+      <div className="flex-1 flex items-center justify-center px-4 py-12 pt-28">
+        <div className="dark-card p-10 max-w-md w-full text-center relative overflow-hidden">
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              background: 'radial-gradient(ellipse 80% 50% at 50% 0%, rgba(255,200,0,0.03) 0%, transparent 70%)',
+            }}
+          />
+
+          <div className="relative z-10">
+            <div
+              className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6"
+              style={{ background: 'rgba(251,191,36,0.08)', border: '1px solid rgba(251,191,36,0.2)' }}
+            >
+              <span className="text-yellow-400 text-3xl font-bold">!</span>
+            </div>
+
+            <h1 className="text-xl font-bold text-white mb-2">Plata a fost anulată</h1>
+            <p className="text-gray-500 text-sm mb-8 leading-relaxed">
+              Nicio sumă nu a fost reținută din contul tău.
+              <br />Poți încerca din nou oricând.
+            </p>
+
+            <Link
+              href="/genereaza"
+              className="btn-green block w-full py-3.5 text-sm mb-3"
+            >
+              Încearcă din nou
+            </Link>
+            <Link
+              href="/"
+              className="block text-sm text-gray-600 hover:text-gray-400 transition-colors"
+            >
+              ← Înapoi la pagina principală
+            </Link>
           </div>
-          <h1 className="text-xl font-bold text-[#1e3a5f] mb-2">Plata a fost anulată</h1>
-          <p className="text-gray-500 text-sm mb-8">
-            Nicio sumă nu a fost reținută din contul tău. Poți încerca din nou oricând.
-          </p>
-          <Link
-            href="/genereaza"
-            className="block w-full bg-[#1e3a5f] text-white font-semibold py-3 rounded-xl hover:bg-blue-900 transition-colors mb-3"
-          >
-            Încearcă din nou
-          </Link>
-          <Link href="/" className="block text-sm text-gray-400 hover:text-gray-600">
-            ← Înapoi la pagina principală
-          </Link>
         </div>
       </div>
     </div>

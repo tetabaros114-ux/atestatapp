@@ -2,6 +2,7 @@
 
 import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import type { SimpleFormData } from '@/types/atestat'
 
 const TOPICS = [
@@ -131,9 +132,10 @@ export default function GenereazaPage() {
   }
 
   const inputCls = (field: string) =>
-    `w-full border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1e3a5f] transition-colors ${
-      errors[field] ? 'border-red-400 bg-red-50' : 'border-gray-300'
-    }`
+    `input-dark ${errors[field] ? 'error' : ''}`
+
+  const selectCls = (field: string) =>
+    `input-dark ${errors[field] ? 'error' : ''}`
 
   const Field = ({
     label,
@@ -149,9 +151,13 @@ export default function GenereazaPage() {
     type?: string
   }) => (
     <div>
-      <label className="block text-sm font-medium text-gray-700 mb-1">
-        {label} {required && <span className="text-red-500">*</span>}
-        {!required && <span className="text-gray-400 font-normal"> (opțional)</span>}
+      <label className="block text-sm font-medium text-gray-300 mb-1.5">
+        {label}{' '}
+        {required ? (
+          <span style={{ color: 'var(--green)' }}>*</span>
+        ) : (
+          <span className="text-gray-600 font-normal">(opțional)</span>
+        )}
       </label>
       <input
         type={type}
@@ -160,39 +166,52 @@ export default function GenereazaPage() {
         placeholder={placeholder}
         className={inputCls(field)}
       />
-      {errors[field] && <p className="text-red-500 text-xs mt-1">{errors[field]}</p>}
+      {errors[field] && <p className="text-red-400 text-xs mt-1">{errors[field]}</p>}
     </div>
   )
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#0a0a0a]">
       {/* Navbar */}
-      <nav className="bg-[#1e3a5f] text-white px-6 py-4 flex items-center justify-between sticky top-0 z-50 shadow-md">
-        <a href="/" className="text-xl font-bold">
-          Atestat<span className="text-amber-400">App</span>
-        </a>
-        <span className="text-blue-200 text-sm hidden sm:block">Generează atestat</span>
+      <nav className="fixed top-0 inset-x-0 z-50 border-b border-white/5 bg-[#0a0a0a]/90 backdrop-blur-md">
+        <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+          <Link href="/" className="text-xl font-bold tracking-tight">
+            Atestat<span className="brand-green">App</span>
+          </Link>
+          <span className="text-gray-500 text-sm hidden sm:block">Generează atestat</span>
+        </div>
       </nav>
 
-      <form onSubmit={handleSubmit} className="max-w-2xl mx-auto px-4 py-10 space-y-6">
-        <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-[#1e3a5f]">Generează atestatul tău</h1>
-          <p className="text-gray-500 mt-1 text-sm">
-            Completează câmpurile de mai jos. Câmpurile cu{' '}
-            <span className="text-red-500">*</span> sunt obligatorii.
+      <form onSubmit={handleSubmit} className="max-w-2xl mx-auto px-4 pt-28 pb-16 space-y-5">
+        <div className="text-center mb-10">
+          <h1 className="text-3xl font-bold text-white mb-2">
+            Generează <span className="brand-green">atestatul tău</span>
+          </h1>
+          <p className="text-gray-500 text-sm">
+            Câmpurile cu <span style={{ color: 'var(--green)' }}>*</span> sunt obligatorii.
           </p>
         </div>
 
         {Object.keys(errors).length > 0 && (
-          <div className="bg-red-50 border border-red-200 rounded-xl px-5 py-4 text-red-700 text-sm">
-            Există câmpuri incomplete. Verifică câmpurile marcate cu roșu.
+          <div
+            className="rounded-xl px-5 py-4 text-sm"
+            style={{
+              background: 'rgba(248,113,113,0.08)',
+              border: '1px solid rgba(248,113,113,0.25)',
+              color: '#f87171',
+            }}
+          >
+            Există câmpuri incomplete. Verifică câmpurile marcate mai jos.
           </div>
         )}
 
         {/* ── 1. Date personale ── */}
-        <section className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 space-y-4">
-          <h2 className="font-bold text-[#1e3a5f] text-base border-b border-gray-100 pb-3">
-            1. Date personale
+        <section className="dark-card p-6 space-y-4">
+          <h2
+            className="font-bold text-base pb-3 border-b flex items-center gap-2"
+            style={{ borderColor: 'rgba(255,255,255,0.06)', color: 'var(--green)' }}
+          >
+            <span className="opacity-60 text-sm font-mono">01</span> Date personale
           </h2>
           <div className="grid sm:grid-cols-2 gap-4">
             <Field label="Nume complet elev" field="student_name" placeholder="ex: Popescu Maria Ioana" />
@@ -204,26 +223,29 @@ export default function GenereazaPage() {
         </section>
 
         {/* ── 2. Tema ── */}
-        <section className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 space-y-4">
-          <h2 className="font-bold text-[#1e3a5f] text-base border-b border-gray-100 pb-3">
-            2. Tema proiectului
+        <section className="dark-card p-6 space-y-4">
+          <h2
+            className="font-bold text-base pb-3 border-b flex items-center gap-2"
+            style={{ borderColor: 'rgba(255,255,255,0.06)', color: 'var(--green)' }}
+          >
+            <span className="opacity-60 text-sm font-mono">02</span> Tema proiectului
           </h2>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Tema <span className="text-red-500">*</span>
+            <label className="block text-sm font-medium text-gray-300 mb-1.5">
+              Tema <span style={{ color: 'var(--green)' }}>*</span>
             </label>
-            <select value={form.tema} onChange={set('tema')} className={inputCls('tema')}>
+            <select value={form.tema} onChange={set('tema')} className={`${selectCls('tema')} select-dark`}>
               <option value="">— Alege tema —</option>
               {TOPICS.map((t) => (
                 <option key={t} value={t}>{t}</option>
               ))}
             </select>
-            {errors.tema && <p className="text-red-500 text-xs mt-1">{errors.tema}</p>}
+            {errors.tema && <p className="text-red-400 text-xs mt-1">{errors.tema}</p>}
           </div>
           {form.tema === 'Altă temă' && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Tema personalizată <span className="text-red-500">*</span>
+              <label className="block text-sm font-medium text-gray-300 mb-1.5">
+                Tema personalizată <span style={{ color: 'var(--green)' }}>*</span>
               </label>
               <input
                 type="text"
@@ -233,18 +255,23 @@ export default function GenereazaPage() {
                 className={inputCls('tema_custom')}
               />
               {errors.tema_custom && (
-                <p className="text-red-500 text-xs mt-1">{errors.tema_custom}</p>
+                <p className="text-red-400 text-xs mt-1">{errors.tema_custom}</p>
               )}
             </div>
           )}
         </section>
 
         {/* ── 3. Firma ── */}
-        <section className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 space-y-4">
-          <div className="border-b border-gray-100 pb-3">
-            <h2 className="font-bold text-[#1e3a5f] text-base">3. Firma aleasă</h2>
-            <p className="text-xs text-gray-400 mt-1 flex items-center gap-1.5">
-              <span className="text-amber-500">✦</span>
+        <section className="dark-card p-6 space-y-4">
+          <div className="pb-3 border-b" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+            <h2
+              className="font-bold text-base flex items-center gap-2"
+              style={{ color: 'var(--green)' }}
+            >
+              <span className="opacity-60 text-sm font-mono">03</span> Firma aleasă
+            </h2>
+            <p className="text-xs text-gray-500 mt-1.5 flex items-center gap-1.5">
+              <span style={{ color: 'var(--green)', opacity: 0.7 }}>✦</span>
               Restul datelor (CIF, adresă, CAEN, angajați etc.) sunt completate automat de AI din surse publice.
             </p>
           </div>
@@ -253,13 +280,13 @@ export default function GenereazaPage() {
 
           <div className="grid sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Forma juridică <span className="text-red-500">*</span>
+              <label className="block text-sm font-medium text-gray-300 mb-1.5">
+                Forma juridică <span style={{ color: 'var(--green)' }}>*</span>
               </label>
               <select
                 value={form.firma_forma_juridica}
                 onChange={set('firma_forma_juridica')}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]"
+                className="input-dark select-dark"
               >
                 {FORME_JURIDICE.map((f) => (
                   <option key={f}>{f}</option>
@@ -268,13 +295,13 @@ export default function GenereazaPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Domeniu activitate <span className="text-red-500">*</span>
+              <label className="block text-sm font-medium text-gray-300 mb-1.5">
+                Domeniu activitate <span style={{ color: 'var(--green)' }}>*</span>
               </label>
               <select
                 value={form.firma_domeniu}
                 onChange={set('firma_domeniu')}
-                className={inputCls('firma_domeniu')}
+                className={`${selectCls('firma_domeniu')} select-dark`}
               >
                 <option value="">— Alege domeniu —</option>
                 {DOMENII.map((d) => (
@@ -282,47 +309,59 @@ export default function GenereazaPage() {
                 ))}
               </select>
               {errors.firma_domeniu && (
-                <p className="text-red-500 text-xs mt-1">{errors.firma_domeniu}</p>
+                <p className="text-red-400 text-xs mt-1">{errors.firma_domeniu}</p>
               )}
             </div>
           </div>
         </section>
 
         {/* ── 4. Extra ── */}
-        <section className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 space-y-4">
-          <h2 className="font-bold text-[#1e3a5f] text-base border-b border-gray-100 pb-3">
-            4. Informații suplimentare
+        <section className="dark-card p-6 space-y-4">
+          <h2
+            className="font-bold text-base pb-3 border-b flex items-center gap-2"
+            style={{ borderColor: 'rgba(255,255,255,0.06)', color: 'var(--green)' }}
+          >
+            <span className="opacity-60 text-sm font-mono">04</span> Informații suplimentare
           </h2>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-300 mb-1.5">
               Instrucțiuni extra{' '}
-              <span className="text-gray-400 font-normal">(opțional)</span>
+              <span className="text-gray-600 font-normal">(opțional)</span>
             </label>
             <textarea
               value={form.extra_info}
               onChange={set('extra_info')}
               rows={3}
               placeholder="ex: Concentrează-te pe angajații din magazine. Firma are 136 de locații în România."
-              className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]"
+              className="input-dark resize-none"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-300 mb-2">
               Emblemă școală{' '}
-              <span className="text-gray-400 font-normal">(opțional — PNG/JPG, fundal alb)</span>
+              <span className="text-gray-600 font-normal">(opțional — PNG/JPG, fundal alb)</span>
             </label>
             <div
-              className="border-2 border-dashed border-gray-200 rounded-xl p-6 text-center cursor-pointer hover:border-[#1e3a5f] hover:bg-blue-50/30 transition-colors"
+              className="border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-all duration-200"
+              style={{ borderColor: emblema ? 'rgba(0,255,135,0.4)' : 'rgba(255,255,255,0.1)' }}
               onClick={() => fileRef.current?.click()}
+              onMouseEnter={(e) => {
+                if (!emblema) (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(0,255,135,0.3)'
+              }}
+              onMouseLeave={(e) => {
+                if (!emblema) (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(255,255,255,0.1)'
+              }}
             >
               {emblema ? (
-                <div className="text-green-600 font-medium text-sm">✓ {emblema.name}</div>
+                <div className="font-medium text-sm" style={{ color: 'var(--green)' }}>
+                  ✓ {emblema.name}
+                </div>
               ) : (
                 <>
-                  <div className="text-3xl mb-2">📷</div>
+                  <div className="text-2xl mb-2 opacity-40">📷</div>
                   <div className="text-gray-500 text-sm">Click pentru a încărca emblema</div>
-                  <div className="text-gray-400 text-xs mt-1">PNG sau JPG · fundal alb · max 5MB</div>
+                  <div className="text-gray-600 text-xs mt-1">PNG sau JPG · fundal alb · max 5MB</div>
                 </>
               )}
             </div>
@@ -344,19 +383,30 @@ export default function GenereazaPage() {
         </section>
 
         {/* ── Submit ── */}
-        <div className="bg-amber-50 border border-amber-200 rounded-xl p-6 text-center space-y-4">
-          <div className="text-[#1e3a5f] font-bold text-lg">Totul este completat?</div>
-          <p className="text-gray-600 text-sm">
-            Vei fi redirecționat spre plată. AI-ul caută automat datele firmei și generează documentul.
-          </p>
-          <button
-            type="submit"
-            disabled={submitting}
-            className="w-full md:w-auto bg-[#1e3a5f] text-white font-bold px-10 py-4 rounded-xl hover:bg-blue-900 transition-colors disabled:opacity-60 text-base"
-          >
-            {submitting ? 'Se procesează...' : 'Continuă spre plată — 10 EUR →'}
-          </button>
-          <p className="text-gray-400 text-xs">Plată securizată prin Stripe · Fără abonament</p>
+        <div
+          className="dark-card p-8 text-center space-y-4 relative overflow-hidden"
+          style={{ borderColor: 'rgba(0,255,135,0.15)' }}
+        >
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              background: 'radial-gradient(ellipse 80% 60% at 50% 100%, rgba(0,255,135,0.06) 0%, transparent 70%)',
+            }}
+          />
+          <div className="relative z-10">
+            <div className="text-white font-bold text-lg mb-1">Totul este completat?</div>
+            <p className="text-gray-500 text-sm mb-6">
+              AI-ul caută automat datele firmei și generează documentul de ~55 de pagini.
+            </p>
+            <button
+              type="submit"
+              disabled={submitting}
+              className="btn-green w-full md:w-auto px-10 py-4 text-base disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+            >
+              {submitting ? 'Se procesează...' : 'Continuă spre plată — 10 EUR →'}
+            </button>
+            <p className="text-gray-600 text-xs mt-4">Plată securizată prin Stripe · Fără abonament</p>
+          </div>
         </div>
       </form>
     </div>

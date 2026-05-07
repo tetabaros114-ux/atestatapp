@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import type { AtestateInput, FirmaData, SimpleFormData } from '@/types/atestat'
 
 type Phase = 'lookup' | 'generate' | 'success' | 'error'
@@ -38,7 +39,6 @@ export default function SuccessPage() {
 
   async function run(simple: SimpleFormData, fname: string) {
     try {
-      // ── Step 1: Look up company data ──────────────────────────────────────
       setPhase('lookup')
 
       let lookedUp: Partial<FirmaData> = {}
@@ -54,14 +54,12 @@ export default function SuccessPage() {
         })
         if (lookupRes.ok) {
           const data = await lookupRes.json()
-          // Ignore if the lookup returned an error field
           if (!data._error) lookedUp = data
         }
       } catch {
-        // Lookup failed — continue with generation using minimal firma data
+        // Lookup failed — continue with minimal firma data
       }
 
-      // ── Step 2: Build full AtestateInput ──────────────────────────────────
       const input: AtestateInput = {
         student_name: simple.student_name,
         clasa: simple.clasa,
@@ -92,7 +90,6 @@ export default function SuccessPage() {
         extra_info: simple.extra_info,
       }
 
-      // ── Step 3: Generate the document ─────────────────────────────────────
       setPhase('generate')
 
       const genRes = await fetch('/api/generate-test', {
@@ -129,32 +126,49 @@ export default function SuccessPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      <nav className="bg-[#1e3a5f] text-white px-6 py-4 shadow-md">
-        <a href="/" className="text-xl font-bold">
-          Atestat<span className="text-amber-400">App</span>
-        </a>
+    <div className="min-h-screen bg-[#0a0a0a] flex flex-col">
+      {/* Navbar */}
+      <nav className="fixed top-0 inset-x-0 z-50 border-b border-white/5 bg-[#0a0a0a]/90 backdrop-blur-md">
+        <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+          <Link href="/" className="text-xl font-bold tracking-tight">
+            Atestat<span className="brand-green">App</span>
+          </Link>
+        </div>
       </nav>
 
-      <div className="flex-1 flex items-center justify-center px-4 py-12">
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-10 max-w-md w-full text-center">
+      <div className="flex-1 flex items-center justify-center px-4 py-12 pt-28">
+        <div className="dark-card p-10 max-w-md w-full text-center relative overflow-hidden">
+          {/* Subtle glow behind card content */}
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              background: 'radial-gradient(ellipse 80% 50% at 50% 0%, rgba(0,255,135,0.05) 0%, transparent 70%)',
+            }}
+          />
 
           {/* ── Loading states ── */}
           {(phase === 'lookup' || phase === 'generate') && (
-            <>
-              <div className="w-16 h-16 border-4 border-[#1e3a5f] border-t-transparent rounded-full animate-spin mx-auto mb-6" />
-              <h1 className="text-xl font-bold text-[#1e3a5f] mb-3">
+            <div className="relative z-10">
+              {/* Spinner */}
+              <div
+                className="w-16 h-16 rounded-full border-4 animate-spin mx-auto mb-6"
+                style={{
+                  borderColor: 'rgba(0,255,135,0.15)',
+                  borderTopColor: 'var(--green)',
+                }}
+              />
+              <h1 className="text-xl font-bold text-white mb-4">
                 {PHASE_LABELS[phase]}
               </h1>
 
               {/* Step indicators */}
-              <div className="flex items-center justify-center gap-3 mb-5">
+              <div className="flex items-center justify-center gap-3 mb-6">
                 <Step
                   label="Caută firma"
                   active={phase === 'lookup'}
                   done={phase === 'generate'}
                 />
-                <div className="w-8 h-px bg-gray-200" />
+                <div className="w-8 h-px bg-white/10" />
                 <Step
                   label="Generează document"
                   active={phase === 'generate'}
@@ -162,66 +176,80 @@ export default function SuccessPage() {
                 />
               </div>
 
-              {phase === 'lookup' && (
-                <p className="text-gray-500 text-sm leading-relaxed">
-                  AI-ul caută datele firmei din surse publice (CIF, adresă, CAEN, angajați...).
-                </p>
-              )}
-              {phase === 'generate' && (
-                <p className="text-gray-500 text-sm leading-relaxed">
-                  AI-ul scrie documentul de ~55 de pagini, adaptat la firma și tema ta.
-                </p>
-              )}
+              <p className="text-gray-500 text-sm leading-relaxed">
+                {phase === 'lookup'
+                  ? 'AI-ul caută datele firmei din surse publice (CIF, adresă, CAEN, angajați...).'
+                  : 'AI-ul scrie documentul de ~55 de pagini, adaptat la firma și tema ta.'}
+              </p>
 
-              <p className="text-gray-400 text-xs mt-4">
+              <p className="text-gray-600 text-xs mt-3">
                 {phase === 'lookup' ? '~15 secunde' : '~45–60 secunde'} · Nu închide pagina
               </p>
 
-              <div className="mt-5 bg-gray-100 rounded-full h-1.5 overflow-hidden">
+              {/* Progress bar */}
+              <div
+                className="mt-5 rounded-full h-1 overflow-hidden"
+                style={{ background: 'rgba(255,255,255,0.06)' }}
+              >
                 <div
-                  className="bg-[#1e3a5f] h-1.5 rounded-full transition-all duration-1000 animate-pulse"
-                  style={{ width: phase === 'lookup' ? '30%' : '75%' }}
+                  className="h-1 rounded-full transition-all duration-1000"
+                  style={{
+                    width: phase === 'lookup' ? '30%' : '75%',
+                    background: 'var(--green)',
+                    boxShadow: '0 0 8px rgba(0,255,135,0.5)',
+                  }}
                 />
               </div>
-            </>
+            </div>
           )}
 
           {/* ── Success ── */}
           {phase === 'success' && (
-            <>
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                <span className="text-green-600 text-3xl">✓</span>
+            <div className="relative z-10">
+              <div
+                className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6"
+                style={{ background: 'rgba(0,255,135,0.12)', border: '1px solid rgba(0,255,135,0.3)' }}
+              >
+                <span className="text-3xl font-bold" style={{ color: 'var(--green)' }}>✓</span>
               </div>
-              <h1 className="text-xl font-bold text-[#1e3a5f] mb-2">Atestatul a fost generat!</h1>
+              <h1 className="text-xl font-bold text-white mb-2">Atestatul a fost generat!</h1>
               <p className="text-gray-500 text-sm mb-1">Descărcarea ar fi trebuit să înceapă automat.</p>
-              <p className="text-gray-400 text-xs mb-8 font-mono">{filename}</p>
-              <a
+              <p className="text-gray-600 text-xs mb-8 font-mono">{filename}</p>
+              <Link
                 href="/genereaza"
-                className="block w-full border-2 border-[#1e3a5f] text-[#1e3a5f] font-semibold py-3 rounded-xl hover:bg-blue-50 transition-colors text-sm"
+                className="block w-full py-3 rounded-xl text-sm font-semibold transition-all duration-200"
+                style={{
+                  border: '1px solid rgba(0,255,135,0.3)',
+                  color: 'var(--green)',
+                  background: 'rgba(0,255,135,0.05)',
+                }}
               >
                 Generează un alt atestat
-              </a>
-            </>
+              </Link>
+            </div>
           )}
 
           {/* ── Error ── */}
           {phase === 'error' && (
-            <>
-              <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                <span className="text-red-500 text-3xl">✕</span>
+            <div className="relative z-10">
+              <div
+                className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6"
+                style={{ background: 'rgba(248,113,113,0.1)', border: '1px solid rgba(248,113,113,0.25)' }}
+              >
+                <span className="text-red-400 text-3xl">✕</span>
               </div>
-              <h1 className="text-xl font-bold text-[#1e3a5f] mb-2">A apărut o eroare</h1>
+              <h1 className="text-xl font-bold text-white mb-2">A apărut o eroare</h1>
               <p className="text-gray-500 text-sm mb-6 leading-relaxed">{errorMsg}</p>
               <button
                 onClick={retry}
-                className="block w-full bg-[#1e3a5f] text-white font-semibold py-3 rounded-xl hover:bg-blue-900 transition-colors mb-3"
+                className="btn-green block w-full py-3 text-sm mb-3"
               >
                 Încearcă din nou
               </button>
-              <a href="/genereaza" className="block text-sm text-gray-400 hover:text-gray-600">
+              <Link href="/genereaza" className="block text-sm text-gray-600 hover:text-gray-400 transition-colors">
                 ← Înapoi la formular
-              </a>
-            </>
+              </Link>
+            </div>
           )}
         </div>
       </div>
@@ -231,19 +259,23 @@ export default function SuccessPage() {
 
 function Step({ label, active, done }: { label: string; active: boolean; done: boolean }) {
   return (
-    <div className="flex flex-col items-center gap-1">
+    <div className="flex flex-col items-center gap-1.5">
       <div
-        className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${
+        className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300"
+        style={
           done
-            ? 'bg-green-500 text-white'
+            ? { background: 'var(--green)', color: '#0a0a0a' }
             : active
-            ? 'bg-[#1e3a5f] text-white'
-            : 'bg-gray-200 text-gray-400'
-        }`}
+            ? { background: 'rgba(0,255,135,0.15)', border: '1px solid var(--green)', color: 'var(--green)' }
+            : { background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', color: '#555' }
+        }
       >
         {done ? '✓' : active ? '●' : '○'}
       </div>
-      <span className={`text-xs ${active ? 'text-[#1e3a5f] font-medium' : 'text-gray-400'}`}>
+      <span
+        className="text-xs transition-colors duration-300"
+        style={{ color: active ? 'var(--green)' : done ? 'rgba(0,255,135,0.6)' : '#555' }}
+      >
         {label}
       </span>
     </div>

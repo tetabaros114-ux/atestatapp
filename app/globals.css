@@ -1,26 +1,83 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --green: #00ff87;
+  --green-dim: #00cc6a;
+  --green-glow: rgba(0, 255, 135, 0.18);
+  --green-glow-sm: rgba(0, 255, 135, 0.08);
+  --dark: #0a0a0a;
+  --dark-card: #141414;
+  --dark-card-border: rgba(255, 255, 255, 0.07);
+  --dark-muted: #888;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+body {
+  background: #0a0a0a;
+  color: #ffffff;
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* Green glow on brand name */
+.brand-green {
+  color: var(--green);
+  text-shadow: 0 0 24px rgba(0, 255, 135, 0.5);
 }
+
+/* Glowing green button */
+.btn-green {
+  background: var(--green);
+  color: #0a0a0a;
+  font-weight: 700;
+  border-radius: 12px;
+  transition: all 0.2s ease;
+  box-shadow: 0 0 24px rgba(0, 255, 135, 0.3);
+}
+.btn-green:hover {
+  background: #00ff99;
+  box-shadow: 0 0 36px rgba(0, 255, 135, 0.5);
+  transform: translateY(-1px);
+}
+
+/* Dark card */
+.dark-card {
+  background: var(--dark-card);
+  border: 1px solid var(--dark-card-border);
+  border-radius: 16px;
+}
+
+/* Subtle green border on hover */
+.green-hover:hover {
+  border-color: rgba(0, 255, 135, 0.3) !important;
+}
+
+/* Input focus ring in green */
+.input-dark {
+  background: #1a1a1a;
+  border: 1px solid rgba(255,255,255,0.1);
+  color: white;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 14px;
+  width: 100%;
+  transition: border-color 0.2s;
+}
+.input-dark::placeholder { color: #555; }
+.input-dark:focus {
+  outline: none;
+  border-color: var(--green);
+  box-shadow: 0 0 0 3px rgba(0, 255, 135, 0.1);
+}
+.input-dark.error {
+  border-color: #f87171;
+  background: #1f1010;
+}
+
+/* Select on dark */
+select.input-dark option { background: #1a1a1a; color: white; }
+select.select-dark option { background: #1a1a1a; color: white; }
