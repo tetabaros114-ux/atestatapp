@@ -2,77 +2,130 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import type { AtestateInput } from '@/types/atestat'
+import type { AtestateInput, FirmaData, SimpleFormData } from '@/types/atestat'
 
-type Status = 'generating' | 'success' | 'error'
+type Phase = 'lookup' | 'generate' | 'success' | 'error'
+
+const PHASE_LABELS: Record<Phase, string> = {
+  lookup: 'Se caută datele firmei...',
+  generate: 'Se generează documentul...',
+  success: 'Gata!',
+  error: 'Eroare',
+}
 
 export default function SuccessPage() {
   const router = useRouter()
-  const [status, setStatus] = useState<Status>('generating')
+  const [phase, setPhase] = useState<Phase>('lookup')
   const [errorMsg, setErrorMsg] = useState('')
   const [filename, setFilename] = useState('atestat.docx')
-  const inputRef = useRef<AtestateInput | null>(null)
+  const simpleRef = useRef<SimpleFormData | null>(null)
 
   useEffect(() => {
     const raw = sessionStorage.getItem('atestateInput')
-    if (!raw) {
-      router.replace('/genereaza')
-      return
-    }
-    let input: AtestateInput
-    try {
-      input = JSON.parse(raw)
-    } catch {
-      router.replace('/genereaza')
-      return
-    }
-    inputRef.current = input
-    const lastName = input.student_name?.split(' ')[0] ?? 'Student'
-    const firmaShort =
-      input.firma?.nume
-        ?.replace(/SC\s+/i, '')
-        .replace(/\s+S\.[AR]\.L\./i, '')
-        .trim()
-        .split(' ')[0] ?? 'Firma'
+    if (!raw) { router.replace('/genereaza'); return }
+
+    let simple: SimpleFormData
+    try { simple = JSON.parse(raw) } catch { router.replace('/genereaza'); return }
+
+    simpleRef.current = simple
+    const lastName = simple.student_name?.split(' ')[0] ?? 'Student'
+    const firmaShort = simple.firma_nume?.replace(/SC\s+/i, '').trim().split(' ')[0] ?? 'Firma'
     setFilename(`Atestat_${lastName}_${firmaShort}.docx`)
-    generate(input)
+
+    run(simple, `Atestat_${lastName}_${firmaShort}.docx`)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  async function generate(input: AtestateInput) {
-    setStatus('generating')
+  async function run(simple: SimpleFormData, fname: string) {
     try {
-      const res = await fetch('/api/generate-test', {
+      // ── Step 1: Look up company data ──────────────────────────────────────
+      setPhase('lookup')
+
+      let lookedUp: Partial<FirmaData> = {}
+      try {
+        const lookupRes = await fetch('/api/lookup-firma', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            firma_nume: simple.firma_nume,
+            forma_juridica: simple.firma_forma_juridica,
+            domeniu: simple.firma_domeniu,
+          }),
+        })
+        if (lookupRes.ok) {
+          const data = await lookupRes.json()
+          // Ignore if the lookup returned an error field
+          if (!data._error) lookedUp = data
+        }
+      } catch {
+        // Lookup failed — continue with generation using minimal firma data
+      }
+
+      // ── Step 2: Build full AtestateInput ──────────────────────────────────
+      const input: AtestateInput = {
+        student_name: simple.student_name,
+        clasa: simple.clasa,
+        profesor_coordonator: simple.profesor_coordonator,
+        liceu: simple.liceu,
+        specializare: simple.specializare,
+        tema: simple.tema,
+        firma: {
+          nume: simple.firma_nume,
+          forma_juridica: simple.firma_forma_juridica,
+          domeniu: simple.firma_domeniu,
+          cif: lookedUp.cif ?? '',
+          rc: lookedUp.rc ?? '',
+          caen_cod: lookedUp.caen_cod ?? '',
+          caen_desc: lookedUp.caen_desc ?? '',
+          adresa: lookedUp.adresa ?? '',
+          telefon: lookedUp.telefon ?? '',
+          email: lookedUp.email ?? '',
+          iban: lookedUp.iban ?? '',
+          banca: lookedUp.banca ?? '',
+          an_infiintare: lookedUp.an_infiintare ?? '',
+          angajati: lookedUp.angajati ?? 0,
+          produse_servicii: lookedUp.produse_servicii ?? [],
+          clienti_principali: lookedUp.clienti_principali,
+        },
+        an: simple.an,
+        emblema_base64: simple.emblema_base64,
+        extra_info: simple.extra_info,
+      }
+
+      // ── Step 3: Generate the document ─────────────────────────────────────
+      setPhase('generate')
+
+      const genRes = await fetch('/api/generate-test', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(input),
       })
 
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({ error: 'Eroare server' }))
-        throw new Error(err.error || `HTTP ${res.status}`)
+      if (!genRes.ok) {
+        const err = await genRes.json().catch(() => ({ error: 'Eroare server' }))
+        throw new Error(err.error || `HTTP ${genRes.status}`)
       }
 
-      const blob = await res.blob()
+      const blob = await genRes.blob()
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = filename
+      a.download = fname
       document.body.appendChild(a)
       a.click()
       document.body.removeChild(a)
       URL.revokeObjectURL(url)
 
       sessionStorage.removeItem('atestateInput')
-      setStatus('success')
+      setPhase('success')
     } catch (err) {
       setErrorMsg(err instanceof Error ? err.message : 'Eroare necunoscută')
-      setStatus('error')
+      setPhase('error')
     }
   }
 
   const retry = () => {
-    if (inputRef.current) generate(inputRef.current)
+    if (simpleRef.current) run(simpleRef.current, filename)
   }
 
   return (
@@ -85,33 +138,62 @@ export default function SuccessPage() {
 
       <div className="flex-1 flex items-center justify-center px-4 py-12">
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-10 max-w-md w-full text-center">
-          {status === 'generating' && (
+
+          {/* ── Loading states ── */}
+          {(phase === 'lookup' || phase === 'generate') && (
             <>
               <div className="w-16 h-16 border-4 border-[#1e3a5f] border-t-transparent rounded-full animate-spin mx-auto mb-6" />
-              <h1 className="text-xl font-bold text-[#1e3a5f] mb-2">
-                Se generează atestatul tău...
+              <h1 className="text-xl font-bold text-[#1e3a5f] mb-3">
+                {PHASE_LABELS[phase]}
               </h1>
-              <p className="text-gray-500 text-sm leading-relaxed">
-                Inteligența artificială scrie documentul de ~55 de pagini, adaptat la firma și tema ta.
+
+              {/* Step indicators */}
+              <div className="flex items-center justify-center gap-3 mb-5">
+                <Step
+                  label="Caută firma"
+                  active={phase === 'lookup'}
+                  done={phase === 'generate'}
+                />
+                <div className="w-8 h-px bg-gray-200" />
+                <Step
+                  label="Generează document"
+                  active={phase === 'generate'}
+                  done={false}
+                />
+              </div>
+
+              {phase === 'lookup' && (
+                <p className="text-gray-500 text-sm leading-relaxed">
+                  AI-ul caută datele firmei din surse publice (CIF, adresă, CAEN, angajați...).
+                </p>
+              )}
+              {phase === 'generate' && (
+                <p className="text-gray-500 text-sm leading-relaxed">
+                  AI-ul scrie documentul de ~55 de pagini, adaptat la firma și tema ta.
+                </p>
+              )}
+
+              <p className="text-gray-400 text-xs mt-4">
+                {phase === 'lookup' ? '~15 secunde' : '~45–60 secunde'} · Nu închide pagina
               </p>
-              <p className="text-gray-400 text-xs mt-3">
-                Durează 45–60 de secunde. Nu închide această pagină.
-              </p>
-              <div className="mt-6 bg-gray-100 rounded-full h-1.5 overflow-hidden">
-                <div className="bg-[#1e3a5f] h-1.5 rounded-full w-3/5 animate-pulse" />
+
+              <div className="mt-5 bg-gray-100 rounded-full h-1.5 overflow-hidden">
+                <div
+                  className="bg-[#1e3a5f] h-1.5 rounded-full transition-all duration-1000 animate-pulse"
+                  style={{ width: phase === 'lookup' ? '30%' : '75%' }}
+                />
               </div>
             </>
           )}
 
-          {status === 'success' && (
+          {/* ── Success ── */}
+          {phase === 'success' && (
             <>
               <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
                 <span className="text-green-600 text-3xl">✓</span>
               </div>
               <h1 className="text-xl font-bold text-[#1e3a5f] mb-2">Atestatul a fost generat!</h1>
-              <p className="text-gray-500 text-sm mb-1">
-                Descărcarea ar fi trebuit să înceapă automat.
-              </p>
+              <p className="text-gray-500 text-sm mb-1">Descărcarea ar fi trebuit să înceapă automat.</p>
               <p className="text-gray-400 text-xs mb-8 font-mono">{filename}</p>
               <a
                 href="/genereaza"
@@ -122,7 +204,8 @@ export default function SuccessPage() {
             </>
           )}
 
-          {status === 'error' && (
+          {/* ── Error ── */}
+          {phase === 'error' && (
             <>
               <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
                 <span className="text-red-500 text-3xl">✕</span>
@@ -142,6 +225,27 @@ export default function SuccessPage() {
           )}
         </div>
       </div>
+    </div>
+  )
+}
+
+function Step({ label, active, done }: { label: string; active: boolean; done: boolean }) {
+  return (
+    <div className="flex flex-col items-center gap-1">
+      <div
+        className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${
+          done
+            ? 'bg-green-500 text-white'
+            : active
+            ? 'bg-[#1e3a5f] text-white'
+            : 'bg-gray-200 text-gray-400'
+        }`}
+      >
+        {done ? '✓' : active ? '●' : '○'}
+      </div>
+      <span className={`text-xs ${active ? 'text-[#1e3a5f] font-medium' : 'text-gray-400'}`}>
+        {label}
+      </span>
     </div>
   )
 }

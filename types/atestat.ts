@@ -1,3 +1,20 @@
+// ─── Simplified form data stored in sessionStorage ─────────────────────────
+
+export interface SimpleFormData {
+  student_name: string
+  clasa: string
+  profesor_coordonator: string
+  liceu: string
+  specializare: string
+  tema: string
+  firma_nume: string
+  firma_forma_juridica: string
+  firma_domeniu: string
+  extra_info?: string
+  emblema_base64?: string
+  an: string
+}
+
 // ─── Input ─────────────────────────────────────────────────────────────────
 
 export interface FirmaData {
