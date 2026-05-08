@@ -5,6 +5,61 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import type { SimpleFormData } from '@/types/atestat'
 
+const INIT = {
+  student_name: '',
+  clasa: '',
+  profesor_coordonator: '',
+  liceu: '',
+  specializare: '',
+  tema: '',
+  tema_custom: '',
+  firma_nume: '',
+  firma_forma_juridica: 'S.R.L.',
+  firma_domeniu: '',
+  extra_info: '',
+}
+
+function Field({
+  label,
+  field,
+  placeholder,
+  required = true,
+  type = 'text',
+  form,
+  errors,
+  onChange,
+}: {
+  label: string
+  field: string
+  placeholder?: string
+  required?: boolean
+  type?: string
+  form: typeof INIT
+  errors: Record<string, string>
+  onChange: (field: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => void
+}) {
+  return (
+    <div>
+      <label className="block text-sm font-medium text-gray-300 mb-1.5">
+        {label}{' '}
+        {required ? (
+          <span style={{ color: 'var(--green)' }}>*</span>
+        ) : (
+          <span className="text-gray-600 font-normal">(opțional)</span>
+        )}
+      </label>
+      <input
+        type={type}
+        value={form[field as keyof typeof INIT]}
+        onChange={onChange(field)}
+        placeholder={placeholder}
+        className={`input-dark ${errors[field] ? 'error' : ''}`}
+      />
+      {errors[field] && <p className="text-red-400 text-xs mt-1">{errors[field]}</p>}
+    </div>
+  )
+}
+
 const TOPICS = [
   'Disponibilitățile bănești',
   'Aprovizionarea cu mărfuri',
@@ -40,20 +95,6 @@ const DOMENII = [
 ]
 
 const FORME_JURIDICE = ['S.R.L.', 'S.A.', 'R.A.', 'S.N.C.', 'S.C.S.', 'P.F.A.', 'Î.I.', 'Î.F.']
-
-const INIT = {
-  student_name: '',
-  clasa: '',
-  profesor_coordonator: '',
-  liceu: '',
-  specializare: '',
-  tema: '',
-  tema_custom: '',
-  firma_nume: '',
-  firma_forma_juridica: 'S.R.L.',
-  firma_domeniu: '',
-  extra_info: '',
-}
 
 export default function GenereazaPage() {
   const router = useRouter()
@@ -131,44 +172,8 @@ export default function GenereazaPage() {
     router.push('/success')
   }
 
-  const inputCls = (field: string) =>
-    `input-dark ${errors[field] ? 'error' : ''}`
-
   const selectCls = (field: string) =>
     `input-dark ${errors[field] ? 'error' : ''}`
-
-  const Field = ({
-    label,
-    field,
-    placeholder,
-    required = true,
-    type = 'text',
-  }: {
-    label: string
-    field: string
-    placeholder?: string
-    required?: boolean
-    type?: string
-  }) => (
-    <div>
-      <label className="block text-sm font-medium text-gray-300 mb-1.5">
-        {label}{' '}
-        {required ? (
-          <span style={{ color: 'var(--green)' }}>*</span>
-        ) : (
-          <span className="text-gray-600 font-normal">(opțional)</span>
-        )}
-      </label>
-      <input
-        type={type}
-        value={form[field as keyof typeof INIT]}
-        onChange={set(field)}
-        placeholder={placeholder}
-        className={inputCls(field)}
-      />
-      {errors[field] && <p className="text-red-400 text-xs mt-1">{errors[field]}</p>}
-    </div>
-  )
 
   return (
     <div className="min-h-screen bg-[#0a0a0a]">
@@ -214,12 +219,12 @@ export default function GenereazaPage() {
             <span className="opacity-60 text-sm font-mono">01</span> Date personale
           </h2>
           <div className="grid sm:grid-cols-2 gap-4">
-            <Field label="Nume complet elev" field="student_name" placeholder="ex: Popescu Maria Ioana" />
-            <Field label="Clasa" field="clasa" placeholder="ex: XII A" />
-            <Field label="Profesor coordonator" field="profesor_coordonator" placeholder="ex: Ionescu Dan" />
-            <Field label="Liceu" field="liceu" placeholder="ex: Colegiul Economic Virgil Madgearu" />
+            <Field label="Nume complet elev" field="student_name" placeholder="ex: Popescu Maria Ioana" form={form} errors={errors} onChange={set} />
+            <Field label="Clasa" field="clasa" placeholder="ex: XII A" form={form} errors={errors} onChange={set} />
+            <Field label="Profesor coordonator" field="profesor_coordonator" placeholder="ex: Ionescu Dan" form={form} errors={errors} onChange={set} />
+            <Field label="Liceu" field="liceu" placeholder="ex: Colegiul Economic Virgil Madgearu" form={form} errors={errors} onChange={set} />
           </div>
-          <Field label="Specializare" field="specializare" placeholder="ex: Tehnician în Activități Economice" />
+          <Field label="Specializare" field="specializare" placeholder="ex: Tehnician în Activități Economice" form={form} errors={errors} onChange={set} />
         </section>
 
         {/* ── 2. Tema ── */}
@@ -252,7 +257,7 @@ export default function GenereazaPage() {
                 value={form.tema_custom}
                 onChange={set('tema_custom')}
                 placeholder="ex: Gestiunea stocurilor la SC Exemplu SRL"
-                className={inputCls('tema_custom')}
+                className={`input-dark ${errors.tema_custom ? 'error' : ''}`}
               />
               {errors.tema_custom && (
                 <p className="text-red-400 text-xs mt-1">{errors.tema_custom}</p>
@@ -276,7 +281,7 @@ export default function GenereazaPage() {
             </p>
           </div>
 
-          <Field label="Denumire firmă" field="firma_nume" placeholder="ex: SC KAUFLAND ROMANIA S.R.L." />
+          <Field label="Denumire firmă" field="firma_nume" placeholder="ex: SC KAUFLAND ROMANIA S.R.L." form={form} errors={errors} onChange={set} />
 
           <div className="grid sm:grid-cols-2 gap-4">
             <div>
