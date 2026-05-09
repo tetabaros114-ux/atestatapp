@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { v4 as uuidv4 } from 'uuid'
+import { inngest } from '@/lib/inngest-client'
 import { createJob } from '@/lib/job-store'
+import { v4 as uuidv4 } from 'uuid'
 import type { SimpleFormData } from '@/types/atestat'
 
 export const runtime = 'nodejs'
@@ -15,6 +16,11 @@ export async function POST(req: NextRequest) {
 
     const jobId = uuidv4()
     await createJob(jobId, formData)
+
+    await inngest.send({
+      name: 'atestat/generate',
+      data: { jobId, ...formData },
+    })
 
     return NextResponse.json({ jobId })
   } catch (err) {
