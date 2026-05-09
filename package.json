@@ -9,7 +9,9 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@ai-sdk/openai": "^3.0.63",
     "@anthropic-ai/sdk": "^0.95.1",
+    "ai": "^6.0.177",
     "docx": "^9.6.1",
     "next": "16.2.6",
     "react": "19.2.4",
