@@ -4,7 +4,7 @@ import { buildDocx } from '@/lib/docx-builder'
 import type { AtestateInput } from '@/types/atestat'
 
 // Allow up to 60 seconds for generation (requires Vercel Pro in production)
-export const maxDuration = 60
+export const maxDuration = 300
 
 export async function POST(req: NextRequest) {
   try {

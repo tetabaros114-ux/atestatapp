@@ -32,7 +32,7 @@ const STEPS = [
   {
     n: '03',
     title: 'Primești documentul',
-    desc: '55–60 de pagini formatate profesional, gata de descărcat în ~60 de secunde.',
+    desc: '55–60 de pagini formatate profesional, gata de descărcat în 3–5 minute.',
   },
 ]
 
@@ -123,7 +123,7 @@ export default function Home() {
             <span className="brand-green">profesional</span>
             {', '}gata în
             <br />
-            60 de secunde.
+            3-5 minute.
           </h1>
 
           <p className="text-lg text-gray-400 max-w-xl mx-auto mb-10 leading-relaxed">
