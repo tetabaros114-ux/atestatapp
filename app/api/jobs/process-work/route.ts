@@ -6,12 +6,18 @@ import { updateJob, getJob } from '@/lib/job-store'
 import { put } from '@vercel/blob'
 import type { AtestateInput } from '@/types/atestat'
 
-export const maxDuration = 10
+export const maxDuration = 300
 
 async function processJob(jobId: string) {
+  // Skip if already processed
   const job = await getJob(jobId)
   if (!job) return
-  if (job.status !== 'pending') return
+  if (job.status === 'done' || job.status === 'error') return
+
+  // Mark as lookup so concurrent calls don't double-process
+  if (job.status !== 'lookup' && job.status !== 'generating' && job.status !== 'building') {
+    await updateJob(jobId, { status: 'lookup' })
+  }
 
   try {
     // Step 1: Lookup company data
@@ -29,7 +35,6 @@ async function processJob(jobId: string) {
       // Continue with minimal data
     }
 
-    // Build full input
     const input: AtestateInput = {
       student_name: job.formData.student_name,
       clasa: job.formData.clasa,
@@ -92,46 +97,17 @@ async function processJob(jobId: string) {
     })
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Eroare necunoscută'
-    console.error('[jobs/process] Process error:', message)
+    console.error('[jobs/process-work] Error:', message)
     await updateJob(jobId, { status: 'error', error: message })
   }
 }
 
 export async function POST(req: NextRequest) {
   const { jobId } = await req.json()
-
   if (!jobId) {
     return NextResponse.json({ error: 'jobId lipsă.' }, { status: 400 })
   }
 
-  const job = await getJob(jobId)
-  if (!job) {
-    return NextResponse.json({ error: 'Job negăsit.' }, { status: 404 })
-  }
-
-  if (job.status !== 'pending') {
-    return NextResponse.json({ error: 'Job deja procesat.' }, { status: 409 })
-  }
-
-  // Return immediately — fire off the actual work in background via keepalive fetch
-  // This bypasses the Vercel serverless timeout
-  const baseUrl = process.env.VERCEL_URL
-    ? `https://${process.env.VERCEL_URL}`
-    : process.env.NEXT_PUBLIC_BASE_URL ?? ''
-
-  if (baseUrl) {
-    fetch(`${baseUrl}/api/jobs/process-work`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ jobId }),
-      keepalive: true,
-    }).catch(() => {
-      // Fire and forget — polling will retry if needed
-    })
-  } else {
-    // Fallback: process inline with small timeout to allow partial work
-    processJob(jobId).catch(() => {})
-  }
-
-  return NextResponse.json({ ok: true, jobId })
+  await processJob(jobId)
+  return NextResponse.json({ ok: true })
 }
