@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { lookupFirma } from '@/lib/claude'
+import { lookupFirmaSafe } from '@/lib/claude'
 
 export const maxDuration = 60
 
@@ -11,17 +11,23 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'firma_nume este obligatoriu.' }, { status: 400 })
     }
 
-    const firmaData = await lookupFirma(
+    const firmaData = await lookupFirmaSafe(
       firma_nume.trim(),
       forma_juridica ?? 'S.R.L.',
-      domeniu ?? ''
+      domeniu ?? '',
+      1 // one retry on failure
     )
+
+    // If no data came back, return _error so caller knows lookup failed
+    if (!firmaData || Object.keys(firmaData).length === 0) {
+      return NextResponse.json({ _error: 'Firma nu a putut fi găsită. Vei completa datele manual.' }, { status: 200 })
+    }
 
     return NextResponse.json(firmaData)
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Eroare la căutarea firmei'
+    const message = err instanceof Error ? err.message : 'Eroare necunoscută'
     console.error('[lookup-firma]', message)
-    // Return empty object — caller will continue with minimal firma data
+    // Graceful fallback — never crash the flow
     return NextResponse.json({ _error: message }, { status: 200 })
   }
 }

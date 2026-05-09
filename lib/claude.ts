@@ -91,11 +91,54 @@ Pentru câmpurile negăsite, folosește estimări rezonabile bazate pe tipul com
     throw new Error('No text response from lookup')
   }
 
-  const cleaned = textBlock.text
+  // Clean markdown code fences
+  let cleaned = textBlock.text
     .replace(/^```json\s*/i, '')
     .replace(/^```\s*/i, '')
     .replace(/\s*```$/i, '')
     .trim()
 
-  return JSON.parse(cleaned) as Partial<FirmaData>
+  // Guard: extract only the JSON object (find first { and last })
+  const jsonStart = cleaned.indexOf('{')
+  const jsonEnd = cleaned.lastIndexOf('}')
+  if (jsonStart === -1 || jsonEnd === -1) {
+    throw new Error(`AI-ul nu a returnat JSON valid. Răspuns: ${cleaned.slice(0, 200)}`)
+  }
+  cleaned = cleaned.slice(jsonStart, jsonEnd + 1)
+
+  try {
+    return JSON.parse(cleaned) as Partial<FirmaData>
+  } catch {
+    throw new Error(`AI-ul nu a returnat JSON valid. Text: ${cleaned.slice(0, 200)}`)
+  }
+}
+
+// ─── Company lookup via web search (with retry + better error handling) ──────
+
+export async function lookupFirmaSafe(
+  firmaNume: string,
+  formaJuridica: string,
+  domeniu: string,
+  retries = 1
+): Promise<Partial<FirmaData>> {
+  let lastError: Error | null = null
+
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      return await lookupFirma(firmaNume, formaJuridica, domeniu)
+    } catch (err) {
+      lastError = err instanceof Error ? err : new Error(String(err))
+      // Only retry on network / timeout errors, not on JSON parsing
+      if (!lastError.message.includes('nu a returnat JSON valid') && attempt < retries) {
+        // small delay before retry
+        await new Promise((r) => setTimeout(r, 500))
+        continue
+      }
+      break
+    }
+  }
+
+  // Return partial empty data instead of throwing — caller handles gracefully
+  console.warn('[lookupFirma] All attempts failed, returning empty data:', lastError?.message)
+  return {}
 }
