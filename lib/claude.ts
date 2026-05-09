@@ -6,10 +6,12 @@ const client = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 })
 
-// ─── Non-streaming generation ────────────────────────────────────────────────
+// ─── Streaming generation ────────────────────────────────────────────────────
+// Streaming is required by Anthropic when max_tokens is high enough that the
+// request may exceed 10 minutes. We accumulate chunks and parse the full JSON.
 
 export async function generateContent(input: AtestateInput): Promise<AtestateContent> {
-  const response = await client.messages.create({
+  const stream = await client.messages.stream({
     model: 'claude-sonnet-4-6',
     max_tokens: 48000,
     system: SYSTEM_PROMPT,
@@ -21,19 +23,31 @@ export async function generateContent(input: AtestateInput): Promise<AtestateCon
     ],
   })
 
-  const rawText = response.content[0].type === 'text' ? response.content[0].text : ''
+  let fullText = ''
+  for await (const event of stream)    // eslint-disable-line no-unreachable
+    if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
+      fullText += event.delta.text
+    }
 
-  const cleaned = rawText
+  const cleaned = fullText
     .replace(/^```json\s*/i, '')
     .replace(/^```\s*/i, '')
     .replace(/\s*```$/i, '')
     .trim()
 
+  // Guard: extract only the JSON object (find first { and last })
+  const jsonStart = cleaned.indexOf('{')
+  const jsonEnd = cleaned.lastIndexOf('}')
+  if (jsonStart === -1 || jsonEnd === -1) {
+    throw new Error(`Claude did not return valid JSON. First 200 chars: ${cleaned.slice(0, 200)}`)
+  }
+  const jsonText = cleaned.slice(jsonStart, jsonEnd + 1)
+
   let result: AtestateResponse
   try {
-    result = JSON.parse(cleaned)
+    result = JSON.parse(jsonText)
   } catch {
-    throw new Error(`Claude returned non-JSON response. First 200 chars: ${cleaned.slice(0, 200)}`)
+    throw new Error(`Claude returned non-JSON response. First 200 chars: ${jsonText.slice(0, 200)}`)
   }
 
   if (result.status === 'error') {
