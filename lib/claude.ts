@@ -11,7 +11,7 @@ const client = new Anthropic({
 export async function generateContent(input: AtestateInput): Promise<AtestateContent> {
   const response = await client.messages.create({
     model: 'claude-sonnet-4-6',
-    max_tokens: 16000,
+    max_tokens: 48000,
     system: SYSTEM_PROMPT,
     messages: [
       {
@@ -52,7 +52,7 @@ export async function lookupFirma(
 ): Promise<Partial<FirmaData>> {
   const response = await client.messages.create({
     model: 'claude-sonnet-4-6',
-    max_tokens: 2000,
+    max_tokens: 4000,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     tools: [{ type: 'web_search_20250305', name: 'web_search' }] as any,
     system: `Ești un cercetător de date despre companii românești. Caută pe internet informații despre compania specificată și returnează EXCLUSIV un obiect JSON valid, fără niciun text explicativ înainte sau după. Nu adăuga markdown, nu adăuga explicații.`,
