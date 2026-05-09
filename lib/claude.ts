@@ -6,42 +6,7 @@ const client = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 })
 
-// ─── Atestat generation (streaming) ──────────────────────────────────────────
-
-export function streamContent(
-  input: AtestateInput,
-  onChunk: (text: string) => void
-): AsyncGenerator<string> {
-  // This uses Anthropic's native streaming
-  const stream = client.messages.stream({
-    model: 'claude-sonnet-4-6',
-    max_tokens: 16000,
-    system: SYSTEM_PROMPT,
-    messages: [
-      {
-        role: 'user',
-        content: JSON.stringify(input, null, 2),
-      },
-    ],
-  })
-
-  return {
-    async next() {
-      const { done, value } = await stream.next()
-      if (done) return { done: true, value: undefined }
-      if (value.type === 'text') {
-        onChunk(value.text)
-        return { done: false, value: value.text }
-      }
-      return { done: false, value: undefined }
-    },
-    [Symbol.asyncIterator]() {
-      return this
-    },
-  } as AsyncGenerator<string>
-}
-
-// ─── Non-streaming fallback ──────────────────────────────────────────────────
+// ─── Non-streaming generation ────────────────────────────────────────────────
 
 export async function generateContent(input: AtestateInput): Promise<AtestateContent> {
   const response = await client.messages.create({
