@@ -1,27 +1,21 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import type { AtestateInput, FirmaData, SimpleFormData, AtestateContent } from '@/types/atestat'
+import type { SimpleFormData } from '@/types/atestat'
 
-type Phase = 'lookup' | 'generate' | 'building' | 'success' | 'error'
-
-const PHASE_LABELS: Record<Phase, string> = {
-  lookup: 'Se caută datele firmei...',
-  generate: 'Se scrie documentul...',
-  building: 'Se construiește fișierul...',
-  success: 'Gata!',
-  error: 'Eroare',
-}
+type Phase = 'submitting' | 'processing' | 'done' | 'error'
 
 export default function SuccessPage() {
   const router = useRouter()
-  const [phase, setPhase] = useState<Phase>('lookup')
-  const [errorMsg, setErrorMsg] = useState('')
-  const [filename, setFilename] = useState('atestat.docx')
+  const [phase, setPhase] = useState<Phase>('submitting')
   const [progress, setProgress] = useState('')
-  const simpleRef = useRef<SimpleFormData | null>(null)
+  const [progressPct, setProgressPct] = useState(0)
+  const [downloadUrl, setDownloadUrl] = useState('')
+  const [filename, setFilename] = useState('')
+  const [errorMsg, setErrorMsg] = useState('')
+  const [jobId, setJobId] = useState('')
 
   useEffect(() => {
     const raw = sessionStorage.getItem('atestateInput')
@@ -30,112 +24,96 @@ export default function SuccessPage() {
     let simple: SimpleFormData
     try { simple = JSON.parse(raw) } catch { router.replace('/genereaza'); return }
 
-    simpleRef.current = simple
-    const lastName = simple.student_name?.split(' ')[0] ?? 'Student'
-    const firmaShort = simple.firma_nume?.replace(/SC\s+/i, '').trim().split(' ')[0] ?? 'Firma'
-    setFilename(`Atestat_${lastName}_${firmaShort}.docx`)
-
-    run(simple)
+    startJob(simple)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  async function run(simple: SimpleFormData) {
+  async function startJob(simple: SimpleFormData) {
     try {
-      setPhase('lookup')
+      // Submit job
+      setPhase('submitting')
+      setProgress('Se inițiază generarea...')
 
-      // ── Step 1: Lookup company data ────────────────────────────────────────
-      setProgress('Căutare date firmă...')
-
-      let lookedUp: Partial<FirmaData> = {}
-      try {
-        const lookupRes = await fetch('/api/lookup-firma', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            firma_nume: simple.firma_nume,
-            forma_juridica: simple.firma_forma_juridica,
-            domeniu: simple.firma_domeniu,
-          }),
-        })
-        if (lookupRes.ok) {
-          const data = await lookupRes.json()
-          if (!data._error) lookedUp = data
-        }
-      } catch {
-        // Lookup failed — continue with minimal firma data
-      }
-
-      // Build full input
-      const input: AtestateInput = {
-        student_name: simple.student_name,
-        clasa: simple.clasa,
-        profesor_coordonator: simple.profesor_coordonator,
-        liceu: simple.liceu,
-        specializare: simple.specializare,
-        tema: simple.tema,
-        firma: {
-          nume: simple.firma_nume,
-          forma_juridica: simple.firma_forma_juridica,
-          domeniu: simple.firma_domeniu,
-          cif: lookedUp.cif ?? '',
-          rc: lookedUp.rc ?? '',
-          caen_cod: lookedUp.caen_cod ?? '',
-          caen_desc: lookedUp.caen_desc ?? '',
-          adresa: lookedUp.adresa ?? '',
-          telefon: lookedUp.telefon ?? '',
-          email: lookedUp.email ?? '',
-          iban: lookedUp.iban ?? '',
-          banca: lookedUp.banca ?? '',
-          an_infiintare: lookedUp.an_infiintare ?? '',
-          angajati: lookedUp.angajati ?? 0,
-          produse_servicii: lookedUp.produse_servicii ?? [],
-          clienti_principali: lookedUp.clienti_principali,
-        },
-        an: simple.an,
-        emblema_base64: simple.emblema_base64,
-        extra_info: simple.extra_info,
-      }
-
-      // ── Step 2: Generate content (non-streaming, more reliable) ─────────────
-      setPhase('generate')
-      setProgress('AI-ul scrie documentul (~45-60 secunde)...')
-
-      const genRes = await fetch('/api/generate-test', {
+      const submitRes = await fetch('/api/generate-job', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(input),
+        body: JSON.stringify(simple),
       })
 
-      if (!genRes.ok) {
-        const err = await genRes.json().catch(() => ({ error: 'Eroare server' }))
-        throw new Error(err.error || `HTTP ${genRes.status}`)
+      if (!submitRes.ok) {
+        const err = await submitRes.json().catch(() => ({ error: 'Eroare server' }))
+        throw new Error(err.error || `HTTP ${submitRes.status}`)
       }
 
-      // The response IS the .docx blob directly (no streaming)
-      setPhase('building')
-      setProgress('Se formatează documentul Word...')
+      const { jobId } = await submitRes.json()
+      setJobId(jobId)
+      sessionStorage.setItem('atestatJobId', jobId)
 
-      const blob = await genRes.blob()
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = filename
-      document.body.appendChild(a)
-      a.click()
-      document.body.removeChild(a)
-      URL.revokeObjectURL(url)
+      // Immediately trigger the worker (POST to /api/jobs/process with jobId)
+      // This bypasses the need for a separate cron/queue system
+      fetch('/api/jobs/process', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ jobId }),
+      }).catch(() => { /* polling will pick up status */ })
 
-      sessionStorage.removeItem('atestateInput')
-      setPhase('success')
+      setPhase('processing')
+      pollJob(jobId)
     } catch (err) {
-      if (err instanceof Error && err.name === 'AbortError') return
       setErrorMsg(err instanceof Error ? err.message : 'Eroare necunoscută')
       setPhase('error')
     }
   }
 
+  async function pollJob(id: string) {
+    while (true) {
+      try {
+        const res = await fetch(`/api/job/${id}`)
+        if (!res.ok) {
+          setErrorMsg(`Eroare server: ${res.status}`)
+          setPhase('error')
+          return
+        }
+
+        const data = await res.json()
+        setProgress(data.progress)
+        setProgressPct(data.progressPct ?? 0)
+
+        if (data.status === 'done') {
+          setDownloadUrl(data.downloadUrl ?? '')
+          setFilename(data.filename ?? 'atestat.docx')
+          sessionStorage.removeItem('atestateInput')
+          setPhase('done')
+          return
+        }
+
+        if (data.status === 'error') {
+          setErrorMsg(data.error ?? 'Eroare necunoscută')
+          setPhase('error')
+          return
+        }
+      } catch {
+        // Network error, keep polling
+      }
+
+      await new Promise((r) => setTimeout(r, 3000))
+    }
+  }
+
   const retry = () => {
-    if (simpleRef.current) run(simpleRef.current)
+    const raw = sessionStorage.getItem('atestateInput')
+    if (raw) {
+      try {
+        const simple = JSON.parse(raw)
+        setPhase('submitting')
+        setErrorMsg('')
+        startJob(simple)
+      } catch {
+        router.replace('/genereaza')
+      }
+    } else {
+      router.replace('/genereaza')
+    }
   }
 
   return (
@@ -151,7 +129,7 @@ export default function SuccessPage() {
 
       <div className="flex-1 flex items-center justify-center px-4 py-12 pt-28">
         <div className="dark-card p-10 max-w-lg w-full text-center relative overflow-hidden">
-          {/* Subtle glow behind card content */}
+          {/* Subtle glow */}
           <div
             className="absolute inset-0 pointer-events-none"
             style={{
@@ -159,44 +137,101 @@ export default function SuccessPage() {
             }}
           />
 
-          {/* ── Loading states ── */}
-          {(phase === 'lookup' || phase === 'generate' || phase === 'building') && (
+          {/* ── Submitting ── */}
+          {phase === 'submitting' && (
             <div className="relative z-10">
-              {/* Spinner */}
               <div
                 className="w-16 h-16 rounded-full border-4 animate-spin mx-auto mb-6"
-                style={{
-                  borderColor: 'rgba(0,255,135,0.15)',
-                  borderTopColor: 'var(--green)',
-                }}
+                style={{ borderColor: 'rgba(0,255,135,0.15)', borderTopColor: 'var(--green)' }}
               />
-              <h1 className="text-xl font-bold text-white mb-4">
-                {PHASE_LABELS[phase]}
-              </h1>
-
-              {/* Step indicators */}
-              <div className="flex items-center justify-center gap-2 mb-6">
-                <Step label="Caută firmă" active={phase === 'lookup'} done={phase !== 'lookup'} />
-                <div className="w-6 h-px bg-white/10" />
-                <Step label="Generează AI" active={phase === 'generate'} done={phase === 'building'} />
-                <div className="w-6 h-px bg-white/10" />
-                <Step label="Construiește .docx" active={phase === 'building'} done={false} />
-              </div>
-
-              <p className="text-gray-500 text-sm leading-relaxed mb-4">
-                {phase === 'lookup'
-                  ? 'AI-ul caută datele firmei din surse publice (CIF, adresă, CAEN...).'
-                  : phase === 'generate'
-                  ? progress
-                  : 'Se formatează documentul Word (.docx) — câteva secunde...'}
-              </p>
-
-              <p className="text-gray-600 text-xs mt-4">Nu închide pagina.</p>
+              <h1 className="text-xl font-bold text-white mb-4">Se inițiază...</h1>
+              <p className="text-gray-500 text-sm">{progress}</p>
             </div>
           )}
 
-          {/* ── Success ── */}
-          {phase === 'success' && (
+          {/* ── Processing ── */}
+          {phase === 'processing' && (
+            <div className="relative z-10">
+              <div
+                className="w-16 h-16 rounded-full border-4 animate-spin mx-auto mb-6"
+                style={{ borderColor: 'rgba(0,255,135,0.15)', borderTopColor: 'var(--green)' }}
+              />
+              <h1 className="text-xl font-bold text-white mb-2">Se generează atestatul...</h1>
+              <p className="text-gray-500 text-sm mb-6">{progress}</p>
+
+              {/* Progress bar */}
+              <div className="w-full bg-white/5 rounded-full h-2 mb-2">
+                <div
+                  className="h-2 rounded-full transition-all duration-500"
+                  style={{ width: `${progressPct}%`, background: 'var(--green)' }}
+                />
+              </div>
+              <p className="text-gray-600 text-xs">{progressPct}%</p>
+
+              <div className="mt-8 flex items-center justify-center gap-3">
+                <div className="flex flex-col items-center gap-1.5">
+                  <div
+                    className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
+                    style={{
+                      background: progressPct >= 10 ? 'var(--green)' : 'rgba(255,255,255,0.06)',
+                      color: progressPct >= 10 ? '#0a0a0a' : '#555',
+                      border: progressPct >= 10 ? 'none' : '1px solid rgba(255,255,255,0.1)',
+                    }}
+                  >
+                    {progressPct >= 10 ? '✓' : '●'}
+                  </div>
+                  <span className="text-xs" style={{ color: progressPct >= 10 ? 'var(--green)' : '#555' }}>Date firmă</span>
+                </div>
+                <div className="w-6 h-px bg-white/10" />
+                <div className="flex flex-col items-center gap-1.5">
+                  <div
+                    className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
+                    style={{
+                      background: progressPct >= 30 ? 'var(--green)' : 'rgba(255,255,255,0.06)',
+                      color: progressPct >= 30 ? '#0a0a0a' : '#555',
+                      border: progressPct >= 30 ? 'none' : '1px solid rgba(255,255,255,0.1)',
+                    }}
+                  >
+                    {progressPct >= 30 ? '✓' : '●'}
+                  </div>
+                  <span className="text-xs" style={{ color: progressPct >= 30 ? 'var(--green)' : '#555' }}>AI scrie</span>
+                </div>
+                <div className="w-6 h-px bg-white/10" />
+                <div className="flex flex-col items-center gap-1.5">
+                  <div
+                    className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
+                    style={{
+                      background: progressPct >= 80 ? 'var(--green)' : 'rgba(255,255,255,0.06)',
+                      color: progressPct >= 80 ? '#0a0a0a' : '#555',
+                      border: progressPct >= 80 ? 'none' : '1px solid rgba(255,255,255,0.1)',
+                    }}
+                  >
+                    {progressPct >= 80 ? '✓' : '●'}
+                  </div>
+                  <span className="text-xs" style={{ color: progressPct >= 80 ? 'var(--green)' : '#555' }}>Word</span>
+                </div>
+                <div className="w-6 h-px bg-white/10" />
+                <div className="flex flex-col items-center gap-1.5">
+                  <div
+                    className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
+                    style={{
+                      background: progressPct >= 90 ? 'var(--green)' : 'rgba(255,255,255,0.06)',
+                      color: progressPct >= 90 ? '#0a0a0a' : '#555',
+                      border: progressPct >= 90 ? 'none' : '1px solid rgba(255,255,255,0.1)',
+                    }}
+                  >
+                    {progressPct >= 90 ? '✓' : '●'}
+                  </div>
+                  <span className="text-xs" style={{ color: progressPct >= 90 ? 'var(--green)' : '#555' }}>Upload</span>
+                </div>
+              </div>
+
+              <p className="text-gray-600 text-xs mt-6">Nu închide pagina. Se repornește automat dacă pierzi conexiunea.</p>
+            </div>
+          )}
+
+          {/* ── Done ── */}
+          {phase === 'done' && (
             <div className="relative z-10">
               <div
                 className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6"
@@ -205,11 +240,23 @@ export default function SuccessPage() {
                 <span className="text-3xl font-bold" style={{ color: 'var(--green)' }}>✓</span>
               </div>
               <h1 className="text-xl font-bold text-white mb-2">Atestatul a fost generat!</h1>
-              <p className="text-gray-500 text-sm mb-1">Descărcarea ar fi trebuit să înceapă automat.</p>
-              <p className="text-gray-600 text-xs mb-8 font-mono">{filename}</p>
+              <p className="text-gray-500 text-sm mb-6">Fișierul este gata pentru descărcare.</p>
+
+              {downloadUrl ? (
+                <a
+                  href={downloadUrl}
+                  download={filename}
+                  className="btn-green block w-full py-3.5 text-sm text-center mb-4"
+                >
+                  ↓ Descarcă {filename}
+                </a>
+              ) : (
+                <p className="text-gray-500 text-sm mb-4">Se pregătește link-ul de descărcare...</p>
+              )}
+
               <Link
                 href="/genereaza"
-                className="block w-full py-3 rounded-xl text-sm font-semibold transition-all duration-200"
+                className="block w-full py-3 rounded-xl text-sm font-semibold text-center transition-all duration-200"
                 style={{
                   border: '1px solid rgba(0,255,135,0.3)',
                   color: 'var(--green)',
@@ -232,10 +279,7 @@ export default function SuccessPage() {
               </div>
               <h1 className="text-xl font-bold text-white mb-2">A apărut o eroare</h1>
               <p className="text-gray-500 text-sm mb-6 leading-relaxed">{errorMsg}</p>
-              <button
-                onClick={retry}
-                className="btn-green block w-full py-3 text-sm mb-3"
-              >
+              <button onClick={retry} className="btn-green block w-full py-3 text-sm mb-3">
                 Încearcă din nou
               </button>
               <Link href="/genereaza" className="block text-sm text-gray-600 hover:text-gray-400 transition-colors">
@@ -245,31 +289,6 @@ export default function SuccessPage() {
           )}
         </div>
       </div>
-    </div>
-  )
-}
-
-function Step({ label, active, done }: { label: string; active: boolean; done: boolean }) {
-  return (
-    <div className="flex flex-col items-center gap-1.5">
-      <div
-        className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300"
-        style={
-          done
-            ? { background: 'var(--green)', color: '#0a0a0a' }
-            : active
-            ? { background: 'rgba(0,255,135,0.15)', border: '1px solid var(--green)', color: 'var(--green)' }
-            : { background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', color: '#555' }
-        }
-      >
-        {done ? '✓' : active ? '●' : '○'}
-      </div>
-      <span
-        className="text-xs transition-colors duration-300"
-        style={{ color: active ? 'var(--green)' : done ? 'rgba(0,255,135,0.6)' : '#555' }}
-      >
-        {label}
-      </span>
     </div>
   )
 }
