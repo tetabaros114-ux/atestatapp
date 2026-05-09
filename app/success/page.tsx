@@ -20,10 +20,8 @@ export default function SuccessPage() {
   const [phase, setPhase] = useState<Phase>('lookup')
   const [errorMsg, setErrorMsg] = useState('')
   const [filename, setFilename] = useState('atestat.docx')
-  const [charsReceived, setCharsReceived] = useState(0)
-  const [lastChunk, setLastChunk] = useState('')
+  const [progress, setProgress] = useState('')
   const simpleRef = useRef<SimpleFormData | null>(null)
-  const abortRef = useRef<AbortController | null>(null)
 
   useEffect(() => {
     const raw = sessionStorage.getItem('atestateInput')
@@ -46,6 +44,8 @@ export default function SuccessPage() {
       setPhase('lookup')
 
       // ── Step 1: Lookup company data ────────────────────────────────────────
+      setProgress('Căutare date firmă...')
+
       let lookedUp: Partial<FirmaData> = {}
       try {
         const lookupRes = await fetch('/api/lookup-firma', {
@@ -96,101 +96,26 @@ export default function SuccessPage() {
         extra_info: simple.extra_info,
       }
 
-      // ── Step 2: Stream content from AI ─────────────────────────────────────
+      // ── Step 2: Generate content (non-streaming, more reliable) ─────────────
       setPhase('generate')
-      setCharsReceived(0)
-      setLastChunk('')
+      setProgress('AI-ul scrie documentul (~45-60 secunde)...')
 
-      const controller = new AbortController()
-      abortRef.current = controller
-
-      const response = await fetch('/api/generate-stream', {
+      const genRes = await fetch('/api/generate-test', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(input),
-        signal: controller.signal,
       })
 
-      if (!response.ok) {
-        const err = await response.json().catch(() => ({ error: 'Eroare server' }))
-        throw new Error(err.error || `HTTP ${response.status}`)
+      if (!genRes.ok) {
+        const err = await genRes.json().catch(() => ({ error: 'Eroare server' }))
+        throw new Error(err.error || `HTTP ${genRes.status}`)
       }
 
-      if (!response.body) throw new Error('Răspunsul nu conține un body.')
-
-      let fullText = ''
-
-      const reader = response.body.getReader()
-      const decoder = new TextDecoder()
-
-      while (true) {
-        const { done, value } = await reader.read()
-        if (done) break
-
-        const chunk = decoder.decode(value, { stream: true })
-        const lines = chunk.split('\n')
-
-        for (const line of lines) {
-          if (!line.startsWith('data: ')) continue
-          const dataStr = line.slice(6)
-          try {
-            const data = JSON.parse(dataStr)
-            if (data.type === 'chunk') {
-              fullText += data.text
-              setCharsReceived(fullText.length)
-              // Update last visible snippet (last 20 chars)
-              setLastChunk(fullText.slice(-20))
-            } else if (data.type === 'done') {
-              // fullText now contains the complete JSON response
-              break
-            } else if (data.type === 'error') {
-              throw new Error(data.message)
-            }
-          } catch {
-            // Skip malformed lines
-          }
-        }
-      }
-
-      // Clean and parse JSON — extract only the JSON object
-      let cleaned = fullText
-        .replace(/^```json\s*/i, '')
-        .replace(/^```\s*/i, '')
-        .replace(/\s*```$/i, '')
-        .trim()
-
-      // Guard: find first { and last } to extract pure JSON
-      const jsonStart = cleaned.indexOf('{')
-      const jsonEnd = cleaned.lastIndexOf('}')
-      if (jsonStart === -1 || jsonEnd === -1) {
-        throw new Error(`AI-ul nu a returnat JSON valid. Primele 200 caractere: ${cleaned.slice(0, 200)}`)
-      }
-      cleaned = cleaned.slice(jsonStart, jsonEnd + 1)
-
-      let content: AtestateContent
-      try {
-        const parsed = JSON.parse(cleaned)
-        if (parsed.status === 'error') throw new Error(parsed.message)
-        content = parsed
-      } catch {
-        throw new Error(`AI-ul nu a returnat JSON valid. Primele 200 caractere: ${cleaned.slice(0, 200)}`)
-      }
-
-      // ── Step 3: Build the .docx ────────────────────────────────────────────
+      // The response IS the .docx blob directly (no streaming)
       setPhase('building')
+      setProgress('Se formatează documentul Word...')
 
-      const docxRes = await fetch('/api/build-docx', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content, input }),
-      })
-
-      if (!docxRes.ok) {
-        const err = await docxRes.json().catch(() => ({ error: 'Eroare la construirea documentului' }))
-        throw new Error(err.error || `HTTP ${docxRes.status}`)
-      }
-
-      const blob = await docxRes.blob()
+      const blob = await genRes.blob()
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
@@ -210,7 +135,6 @@ export default function SuccessPage() {
   }
 
   const retry = () => {
-    if (abortRef.current) abortRef.current.abort()
     if (simpleRef.current) run(simpleRef.current)
   }
 
@@ -252,54 +176,20 @@ export default function SuccessPage() {
 
               {/* Step indicators */}
               <div className="flex items-center justify-center gap-2 mb-6">
-                <Step label="Caută firma" active={phase === 'lookup'} done={phase !== 'lookup'} />
+                <Step label="Caută firmă" active={phase === 'lookup'} done={phase !== 'lookup'} />
                 <div className="w-6 h-px bg-white/10" />
                 <Step label="Generează AI" active={phase === 'generate'} done={phase === 'building'} />
                 <div className="w-6 h-px bg-white/10" />
                 <Step label="Construiește .docx" active={phase === 'building'} done={false} />
               </div>
 
-              {phase === 'lookup' && (
-                <p className="text-gray-500 text-sm leading-relaxed">
-                  AI-ul caută datele firmei din surse publice (CIF, adresă, CAEN...).
-                </p>
-              )}
-
-              {phase === 'generate' && (
-                <div>
-                  <p className="text-gray-500 text-sm leading-relaxed mb-3">
-                    AI-ul scrie documentul de ~55 de pagini în timp real...
-                  </p>
-                  <div className="bg-[#1a1a1a] rounded-lg px-4 py-3 text-left mb-3">
-                    <div className="text-gray-600 text-xs mb-1 font-mono">Ultimele caractere primite:</div>
-                    <div className="text-gray-400 text-xs font-mono break-all">
-                      <span style={{ color: 'var(--green)' }}>...{lastChunk}</span>
-                      <span className="animate-pulse" style={{ color: 'var(--green)' }}>▌</span>
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between text-xs text-gray-600 mb-1">
-                    <span>Se primește răspunsul AI...</span>
-                    <span>{charsReceived.toLocaleString('ro-RO')} caractere</span>
-                  </div>
-                  <div className="w-full bg-[#1a1a1a] rounded-full h-1.5 overflow-hidden">
-                    <div
-                      className="h-1.5 rounded-full animate-pulse"
-                      style={{
-                        width: `${Math.min(100, (charsReceived / 8000) * 100)}%`,
-                        background: 'var(--green)',
-                        boxShadow: '0 0 8px rgba(0,255,135,0.5)',
-                        transition: 'width 0.3s ease',
-                      }}
-                    />
-                  </div>
-                </div>
-              )}
-
-              {phase === 'building' && (
-                <p className="text-gray-500 text-sm leading-relaxed">
-                  Se formatează documentul Word (.docx) — câteva secunde...
-                </p>
-              )}
+              <p className="text-gray-500 text-sm leading-relaxed mb-4">
+                {phase === 'lookup'
+                  ? 'AI-ul caută datele firmei din surse publice (CIF, adresă, CAEN...).'
+                  : phase === 'generate'
+                  ? progress
+                  : 'Se formatează documentul Word (.docx) — câteva secunde...'}
+              </p>
 
               <p className="text-gray-600 text-xs mt-4">Nu închide pagina.</p>
             </div>
