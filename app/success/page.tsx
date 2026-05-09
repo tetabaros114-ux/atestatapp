@@ -152,12 +152,20 @@ export default function SuccessPage() {
         }
       }
 
-      // Clean and parse JSON
-      const cleaned = fullText
+      // Clean and parse JSON — extract only the JSON object
+      let cleaned = fullText
         .replace(/^```json\s*/i, '')
         .replace(/^```\s*/i, '')
         .replace(/\s*```$/i, '')
         .trim()
+
+      // Guard: find first { and last } to extract pure JSON
+      const jsonStart = cleaned.indexOf('{')
+      const jsonEnd = cleaned.lastIndexOf('}')
+      if (jsonStart === -1 || jsonEnd === -1) {
+        throw new Error(`AI-ul nu a returnat JSON valid. Primele 200 caractere: ${cleaned.slice(0, 200)}`)
+      }
+      cleaned = cleaned.slice(jsonStart, jsonEnd + 1)
 
       let content: AtestateContent
       try {
