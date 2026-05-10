@@ -1,12 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { updateJob } from '@/lib/job-store'
+import { updateJob, createJob } from '@/lib/job-store'
+import { v4 as uuidv4 } from 'uuid'
+import type { SimpleFormData } from '@/types/atestat'
 
 export const maxDuration = 10
 
 export async function POST(req: NextRequest) {
   try {
-    const { jobId } = await req.json()
-    if (!jobId) return NextResponse.json({ error: 'jobId lipsă' }, { status: 400 })
+    const formData: SimpleFormData = await req.json()
+    if (!formData.student_name || !formData.tema || !formData.firma_nume) {
+      return NextResponse.json({ error: 'Câmpuri lipsă.' }, { status: 400 })
+    }
+
+    const jobId = uuidv4()
+    await createJob(jobId, formData)
+    await updateJob(jobId, { status: 'generating', progress: 'Se inițiază generarea...', progressPct: 5 })
 
     const baseUrl = process.env.VERCEL_URL
       ? `https://${process.env.VERCEL_URL}`
@@ -21,9 +29,7 @@ export async function POST(req: NextRequest) {
       }).catch(() => {})
     }
 
-    await updateJob(jobId, { status: 'generating', progress: 'Se inițiază generarea...', progressPct: 5 })
-
-    return NextResponse.json({ ok: true })
+    return NextResponse.json({ jobId })
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Eroare necunoscută'
     return NextResponse.json({ error: message }, { status: 500 })
