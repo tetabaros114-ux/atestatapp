@@ -2,7 +2,7 @@ import { promises as fs } from 'fs'
 import path from 'path'
 import type { SimpleFormData, AtestateContent } from '@/types/atestat'
 
-export type JobStatus = 'pending' | 'lookup' | 'lookup_done' | 'generating' | 'content_done' | 'building' | 'done' | 'error'
+export type JobStatus = 'pending' | 'lookup' | 'generating' | 'building' | 'uploading' | 'done' | 'error'
 
 export interface Job {
   id: string

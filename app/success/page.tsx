@@ -7,6 +7,30 @@ import type { SimpleFormData } from '@/types/atestat'
 
 type Phase = 'loading' | 'done' | 'error'
 
+async function pollUntilDone(jobId: string, timeout = 360000): Promise<{
+  downloadUrl: string
+  filename: string
+}> {
+  const deadline = Date.now() + timeout
+  while (Date.now() < deadline) {
+    try {
+      const res = await fetch(`/api/job/${jobId}`)
+      const data = await res.json()
+
+      if (data.status === 'done') {
+        return { downloadUrl: data.downloadUrl ?? '', filename: data.filename ?? 'atestat.docx' }
+      }
+      if (data.status === 'error') {
+        throw new Error(data.error ?? 'Eroare necunoscută')
+      }
+    } catch {
+      // Network hiccup — keep polling
+    }
+    await new Promise((r) => setTimeout(r, 3000))
+  }
+  throw new Error('Timpul a expirat. Te rugăm să încerci din nou.')
+}
+
 export default function SuccessPage() {
   const router = useRouter()
   const [phase, setPhase] = useState<Phase>('loading')
@@ -21,17 +45,18 @@ export default function SuccessPage() {
     let simple: SimpleFormData
     try { simple = JSON.parse(raw) } catch { router.replace('/genereaza'); return }
 
-    generate(simple)
+    start(simple)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  async function generate(simple: SimpleFormData) {
+  async function start(simple: SimpleFormData) {
     try {
+      // Fire off the generation and return immediately
+      // The server starts background work via keepalive fetch
       const res = await fetch('/api/generate-single', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(simple),
-        // IMPORTANT: signal option allows AbortController to cancel if page unloads
       })
 
       if (!res.ok) {
@@ -39,9 +64,13 @@ export default function SuccessPage() {
         throw new Error(err.error || `HTTP ${res.status}`)
       }
 
-      const data = await res.json()
-      setDownloadUrl(data.downloadUrl ?? '')
-      setFilename(data.filename ?? 'atestat.docx')
+      const { jobId } = await res.json()
+
+      // Poll until the job is done (up to 6 minutes)
+      const result = await pollUntilDone(jobId)
+
+      setDownloadUrl(result.downloadUrl)
+      setFilename(result.filename)
       sessionStorage.removeItem('atestateInput')
       setPhase('done')
     } catch (err) {
@@ -57,7 +86,7 @@ export default function SuccessPage() {
         const simple = JSON.parse(raw)
         setPhase('loading')
         setErrorMsg('')
-        generate(simple)
+        start(simple)
       } catch {
         router.replace('/genereaza')
       }
@@ -85,7 +114,6 @@ export default function SuccessPage() {
             }}
           />
 
-          {/* Loading */}
           {phase === 'loading' && (
             <div className="relative z-10">
               <div
@@ -93,9 +121,7 @@ export default function SuccessPage() {
                 style={{ borderColor: 'rgba(0,255,135,0.15)', borderTopColor: 'var(--green)' }}
               />
               <h1 className="text-xl font-bold text-white mb-2">Se generează atestatul...</h1>
-              <p className="text-gray-500 text-sm mb-6">
-                durează 1–2 minute. Nu închide pagina.
-              </p>
+              <p className="text-gray-500 text-sm mb-6">1–2 minute. Nu închide pagina.</p>
               <div className="w-full bg-white/5 rounded-full h-2 mb-2 overflow-hidden">
                 <div
                   className="h-2 rounded-full animate-pulse"
@@ -106,7 +132,6 @@ export default function SuccessPage() {
             </div>
           )}
 
-          {/* Done */}
           {phase === 'done' && (
             <div className="relative z-10">
               <div
@@ -117,34 +142,21 @@ export default function SuccessPage() {
               </div>
               <h1 className="text-xl font-bold text-white mb-2">Atestatul a fost generat!</h1>
               <p className="text-gray-500 text-sm mb-6">Fișierul este gata pentru descărcare.</p>
-
               {downloadUrl ? (
-                <a
-                  href={downloadUrl}
-                  download={filename}
-                  className="btn-green block w-full py-3.5 text-sm text-center mb-4"
-                >
+                <a href={downloadUrl} download={filename} className="btn-green block w-full py-3.5 text-sm text-center mb-4">
                   ↓ Descarcă {filename}
                 </a>
-              ) : (
-                <p className="text-gray-500 text-sm mb-4">Se pregătește link-ul...</p>
-              )}
-
+              ) : null}
               <Link
                 href="/genereaza"
                 className="block w-full py-3 rounded-xl text-sm font-semibold text-center transition-all duration-200"
-                style={{
-                  border: '1px solid rgba(0,255,135,0.3)',
-                  color: 'var(--green)',
-                  background: 'rgba(0,255,135,0.05)',
-                }}
+                style={{ border: '1px solid rgba(0,255,135,0.3)', color: 'var(--green)', background: 'rgba(0,255,135,0.05)' }}
               >
                 Generează un alt atestat
               </Link>
             </div>
           )}
 
-          {/* Error */}
           {phase === 'error' && (
             <div className="relative z-10">
               <div
