@@ -2,7 +2,7 @@ import { promises as fs } from 'fs'
 import path from 'path'
 import type { SimpleFormData, AtestateContent } from '@/types/atestat'
 
-export type JobStatus = 'pending' | 'lookup' | 'generating' | 'building' | 'done' | 'error'
+export type JobStatus = 'pending' | 'lookup' | 'lookup_done' | 'generating' | 'content_done' | 'building' | 'done' | 'error'
 
 export interface Job {
   id: string
@@ -10,7 +10,8 @@ export interface Job {
   progress: string
   progressPct: number
   formData: SimpleFormData
-  input?: AtestateContent | null
+  lookupData?: Record<string, unknown>
+  contentJson?: string
   downloadUrl?: string
   filename?: string
   error?: string

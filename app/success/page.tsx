@@ -5,17 +5,42 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import type { SimpleFormData } from '@/types/atestat'
 
-type Phase = 'submitting' | 'processing' | 'done' | 'error'
+type Phase = 'submitting' | 'lookup' | 'generating' | 'building' | 'done' | 'error'
+
+const PHASE_LABELS: Record<Phase, string> = {
+  submitting: 'Se inițiază...',
+  lookup: 'Se caută datele firmei...',
+  generating: 'AI-ul scrie documentul...',
+  building: 'Se construiește fișierul Word...',
+  done: 'Gata!',
+  error: 'Eroare',
+}
+
+// Poll until job reaches target status (or any terminal status)
+async function pollUntil(
+  jobId: string,
+  target: string[],
+  timeout = 120000
+): Promise<Record<string, unknown>> {
+  const deadline = Date.now() + timeout
+  while (Date.now() < deadline) {
+    const res = await fetch(`/api/job/${jobId}`)
+    const data = await res.json()
+    if (target.includes(data.status)) return data
+    if (data.status === 'error') throw new Error((data.error as string) ?? 'Eroare necunoscută')
+    await new Promise((r) => setTimeout(r, 2500))
+  }
+  throw new Error('Timpul a expirat. Încearcă din nou.')
+}
 
 export default function SuccessPage() {
   const router = useRouter()
   const [phase, setPhase] = useState<Phase>('submitting')
-  const [progress, setProgress] = useState('')
   const [progressPct, setProgressPct] = useState(0)
+  const [progressText, setProgressText] = useState('')
   const [downloadUrl, setDownloadUrl] = useState('')
   const [filename, setFilename] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
-  const [jobId, setJobId] = useState('')
 
   useEffect(() => {
     const raw = sessionStorage.getItem('atestateInput')
@@ -24,79 +49,79 @@ export default function SuccessPage() {
     let simple: SimpleFormData
     try { simple = JSON.parse(raw) } catch { router.replace('/genereaza'); return }
 
-    startJob(simple)
+    run(simple)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  async function startJob(simple: SimpleFormData) {
+  async function run(simple: SimpleFormData) {
     try {
-      // Submit job
+      // 1. Submit job
       setPhase('submitting')
-      setProgress('Se inițiază generarea...')
+      setProgressText('Se creează job-ul...')
+      setProgressPct(0)
 
-      const submitRes = await fetch('/api/generate-job', {
+      const subRes = await fetch('/api/generate-job', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(simple),
       })
 
-      if (!submitRes.ok) {
-        const err = await submitRes.json().catch(() => ({ error: 'Eroare server' }))
-        throw new Error(err.error || `HTTP ${submitRes.status}`)
+      if (!subRes.ok) {
+        const err = await subRes.json().catch(() => ({ error: 'Eroare server' }))
+        throw new Error(err.error || `HTTP ${subRes.status}`)
       }
 
-      const { jobId } = await submitRes.json()
-      setJobId(jobId)
-      sessionStorage.setItem('atestatJobId', jobId)
+      const { jobId } = await subRes.json()
 
-      // Immediately trigger the worker (POST to /api/jobs/process with jobId)
-      // This bypasses the need for a separate cron/queue system
-      fetch('/api/jobs/process', {
+      // 2. Step 1: Lookup (returns when lookup_done is reached)
+      setPhase('lookup')
+      setProgressText('Se caută datele firmei...')
+      setProgressPct(10)
+
+      const lookupRes = await fetch('/api/step/lookup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ jobId }),
-      }).catch(() => { /* polling will pick up status */ })
+      })
 
-      setPhase('processing')
-      pollJob(jobId)
+      if (!lookupRes.ok) throw new Error('Eroare la căutarea firmei')
+      await pollUntil(jobId, ['lookup_done', 'generating', 'content_done', 'building', 'done', 'error'], 60000)
+
+      // 3. Step 2: Generate (polls until content_done)
+      setPhase('generating')
+      setProgressText('AI-ul scrie documentul (~1–2 minute)...')
+      setProgressPct(25)
+
+      const genRes = await fetch('/api/step/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ jobId }),
+      })
+
+      if (!genRes.ok) throw new Error('Eroare la pornirea generării')
+      await pollUntil(jobId, ['content_done', 'building', 'done', 'error'], 180000)
+
+      // 4. Step 3: Build docx (polls until done)
+      setPhase('building')
+      setProgressText('Se construiește fișierul Word...')
+      setProgressPct(85)
+
+      const buildRes = await fetch('/api/step/build', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ jobId }),
+      })
+
+      if (!buildRes.ok) throw new Error('Eroare la pornirea construirii')
+      const final = await pollUntil(jobId, ['done'], 120000)
+
+      setDownloadUrl((final.downloadUrl as string) ?? '')
+      setFilename((final.filename as string) ?? 'atestat.docx')
+      sessionStorage.removeItem('atestateInput')
+      setPhase('done')
     } catch (err) {
       setErrorMsg(err instanceof Error ? err.message : 'Eroare necunoscută')
       setPhase('error')
-    }
-  }
-
-  async function pollJob(id: string) {
-    while (true) {
-      try {
-        const res = await fetch(`/api/job/${id}`)
-        if (!res.ok) {
-          setErrorMsg(`Eroare server: ${res.status}`)
-          setPhase('error')
-          return
-        }
-
-        const data = await res.json()
-        setProgress(data.progress)
-        setProgressPct(data.progressPct ?? 0)
-
-        if (data.status === 'done') {
-          setDownloadUrl(data.downloadUrl ?? '')
-          setFilename(data.filename ?? 'atestat.docx')
-          sessionStorage.removeItem('atestateInput')
-          setPhase('done')
-          return
-        }
-
-        if (data.status === 'error') {
-          setErrorMsg(data.error ?? 'Eroare necunoscută')
-          setPhase('error')
-          return
-        }
-      } catch {
-        // Network error, keep polling
-      }
-
-      await new Promise((r) => setTimeout(r, 3000))
     }
   }
 
@@ -107,7 +132,7 @@ export default function SuccessPage() {
         const simple = JSON.parse(raw)
         setPhase('submitting')
         setErrorMsg('')
-        startJob(simple)
+        run(simple)
       } catch {
         router.replace('/genereaza')
       }
@@ -116,9 +141,10 @@ export default function SuccessPage() {
     }
   }
 
+  const pct = progressPct
+
   return (
     <div className="min-h-screen bg-[#0a0a0a] flex flex-col">
-      {/* Navbar */}
       <nav className="fixed top-0 inset-x-0 z-50 border-b border-white/5 bg-[#0a0a0a]/90 backdrop-blur-md">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
           <Link href="/" className="text-xl font-bold tracking-tight">
@@ -129,7 +155,6 @@ export default function SuccessPage() {
 
       <div className="flex-1 flex items-center justify-center px-4 py-12 pt-28">
         <div className="dark-card p-10 max-w-lg w-full text-center relative overflow-hidden">
-          {/* Subtle glow */}
           <div
             className="absolute inset-0 pointer-events-none"
             style={{
@@ -137,100 +162,52 @@ export default function SuccessPage() {
             }}
           />
 
-          {/* ── Submitting ── */}
-          {phase === 'submitting' && (
+          {phase !== 'done' && phase !== 'error' && (
             <div className="relative z-10">
               <div
                 className="w-16 h-16 rounded-full border-4 animate-spin mx-auto mb-6"
                 style={{ borderColor: 'rgba(0,255,135,0.15)', borderTopColor: 'var(--green)' }}
               />
-              <h1 className="text-xl font-bold text-white mb-4">Se inițiază...</h1>
-              <p className="text-gray-500 text-sm">{progress}</p>
-            </div>
-          )}
+              <h1 className="text-xl font-bold text-white mb-2">{PHASE_LABELS[phase]}</h1>
+              <p className="text-gray-500 text-sm mb-6">{progressText}</p>
 
-          {/* ── Processing ── */}
-          {phase === 'processing' && (
-            <div className="relative z-10">
-              <div
-                className="w-16 h-16 rounded-full border-4 animate-spin mx-auto mb-6"
-                style={{ borderColor: 'rgba(0,255,135,0.15)', borderTopColor: 'var(--green)' }}
-              />
-              <h1 className="text-xl font-bold text-white mb-2">Se generează atestatul...</h1>
-              <p className="text-gray-500 text-sm mb-6">{progress}</p>
-
-              {/* Progress bar */}
               <div className="w-full bg-white/5 rounded-full h-2 mb-2">
                 <div
                   className="h-2 rounded-full transition-all duration-500"
-                  style={{ width: `${progressPct}%`, background: 'var(--green)' }}
+                  style={{ width: `${pct}%`, background: 'var(--green)' }}
                 />
               </div>
-              <p className="text-gray-600 text-xs">{progressPct}%</p>
+              <p className="text-gray-600 text-xs mb-6">{pct}%</p>
 
-              <div className="mt-8 flex items-center justify-center gap-3">
-                <div className="flex flex-col items-center gap-1.5">
-                  <div
-                    className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
-                    style={{
-                      background: progressPct >= 10 ? 'var(--green)' : 'rgba(255,255,255,0.06)',
-                      color: progressPct >= 10 ? '#0a0a0a' : '#555',
-                      border: progressPct >= 10 ? 'none' : '1px solid rgba(255,255,255,0.1)',
-                    }}
-                  >
-                    {progressPct >= 10 ? '✓' : '●'}
-                  </div>
-                  <span className="text-xs" style={{ color: progressPct >= 10 ? 'var(--green)' : '#555' }}>Date firmă</span>
-                </div>
-                <div className="w-6 h-px bg-white/10" />
-                <div className="flex flex-col items-center gap-1.5">
-                  <div
-                    className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
-                    style={{
-                      background: progressPct >= 30 ? 'var(--green)' : 'rgba(255,255,255,0.06)',
-                      color: progressPct >= 30 ? '#0a0a0a' : '#555',
-                      border: progressPct >= 30 ? 'none' : '1px solid rgba(255,255,255,0.1)',
-                    }}
-                  >
-                    {progressPct >= 30 ? '✓' : '●'}
-                  </div>
-                  <span className="text-xs" style={{ color: progressPct >= 30 ? 'var(--green)' : '#555' }}>AI scrie</span>
-                </div>
-                <div className="w-6 h-px bg-white/10" />
-                <div className="flex flex-col items-center gap-1.5">
-                  <div
-                    className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
-                    style={{
-                      background: progressPct >= 80 ? 'var(--green)' : 'rgba(255,255,255,0.06)',
-                      color: progressPct >= 80 ? '#0a0a0a' : '#555',
-                      border: progressPct >= 80 ? 'none' : '1px solid rgba(255,255,255,0.1)',
-                    }}
-                  >
-                    {progressPct >= 80 ? '✓' : '●'}
-                  </div>
-                  <span className="text-xs" style={{ color: progressPct >= 80 ? 'var(--green)' : '#555' }}>Word</span>
-                </div>
-                <div className="w-6 h-px bg-white/10" />
-                <div className="flex flex-col items-center gap-1.5">
-                  <div
-                    className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
-                    style={{
-                      background: progressPct >= 90 ? 'var(--green)' : 'rgba(255,255,255,0.06)',
-                      color: progressPct >= 90 ? '#0a0a0a' : '#555',
-                      border: progressPct >= 90 ? 'none' : '1px solid rgba(255,255,255,0.1)',
-                    }}
-                  >
-                    {progressPct >= 90 ? '✓' : '●'}
-                  </div>
-                  <span className="text-xs" style={{ color: progressPct >= 90 ? 'var(--green)' : '#555' }}>Upload</span>
-                </div>
+              <div className="flex items-center justify-center gap-3">
+                {(['lookup', 'generating', 'building'] as const).map((s, i) => {
+                  const thresholds = [10, 25, 85]
+                  const labels = { lookup: 'Date firmă', generating: 'AI scrie', building: 'Word' }
+                  const active = pct >= thresholds[i]
+                  return (
+                    <div key={s} className="flex flex-col items-center gap-1.5">
+                      <div
+                        className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
+                        style={
+                          active
+                            ? { background: 'var(--green)', color: '#0a0a0a' }
+                            : { background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', color: '#555' }
+                        }
+                      >
+                        {active ? '✓' : '●'}
+                      </div>
+                      <span className="text-xs" style={{ color: active ? 'var(--green)' : '#555' }}>
+                        {labels[s]}
+                      </span>
+                    </div>
+                  )
+                })}
               </div>
 
-              <p className="text-gray-600 text-xs mt-6">Nu închide pagina. Se repornește automat dacă pierzi conexiunea.</p>
+              <p className="text-gray-600 text-xs mt-6">Nu închide pagina.</p>
             </div>
           )}
 
-          {/* ── Done ── */}
           {phase === 'done' && (
             <div className="relative z-10">
               <div
@@ -243,15 +220,11 @@ export default function SuccessPage() {
               <p className="text-gray-500 text-sm mb-6">Fișierul este gata pentru descărcare.</p>
 
               {downloadUrl ? (
-                <a
-                  href={downloadUrl}
-                  download={filename}
-                  className="btn-green block w-full py-3.5 text-sm text-center mb-4"
-                >
+                <a href={downloadUrl} download={filename} className="btn-green block w-full py-3.5 text-sm text-center mb-4">
                   ↓ Descarcă {filename}
                 </a>
               ) : (
-                <p className="text-gray-500 text-sm mb-4">Se pregătește link-ul de descărcare...</p>
+                <p className="text-gray-500 text-sm mb-4">Se pregătește link-ul...</p>
               )}
 
               <Link
@@ -268,7 +241,6 @@ export default function SuccessPage() {
             </div>
           )}
 
-          {/* ── Error ── */}
           {phase === 'error' && (
             <div className="relative z-10">
               <div
