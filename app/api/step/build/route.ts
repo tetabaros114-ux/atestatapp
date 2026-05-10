@@ -1,28 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { updateJob, getJob } from '@/lib/job-store'
+import { updateJob } from '@/lib/job-store'
 
 export const maxDuration = 10
 
 export async function POST(req: NextRequest) {
-  const { jobId } = await req.json()
-  if (!jobId) return NextResponse.json({ error: 'jobId lipsă' }, { status: 400 })
+  try {
+    const { jobId } = await req.json()
+    if (!jobId) return NextResponse.json({ error: 'jobId lipsă' }, { status: 400 })
 
-  const job = await getJob(jobId)
-  if (!job) return NextResponse.json({ error: 'Job negăsit' }, { status: 404 })
+    const baseUrl = process.env.VERCEL_URL
+      ? `https://${process.env.VERCEL_URL}`
+      : process.env.NEXT_PUBLIC_BASE_URL ?? ''
 
-  // Fire off the build work with keepalive
-  const baseUrl = process.env.VERCEL_URL
-    ? `https://${process.env.VERCEL_URL}`
-    : process.env.NEXT_PUBLIC_BASE_URL ?? ''
+    if (baseUrl) {
+      fetch(`${baseUrl}/api/step/build-work`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ jobId }),
+        keepalive: true,
+      }).catch(() => {})
+    }
 
-  if (baseUrl) {
-    fetch(`${baseUrl}/api/step/build-work`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ jobId }),
-      keepalive: true,
-    }).catch(() => {})
+    await updateJob(jobId, { status: 'building', progress: 'Se construiește fișierul Word...', progressPct: 85 })
+
+    return NextResponse.json({ ok: true })
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Eroare necunoscută'
+    return NextResponse.json({ error: message }, { status: 500 })
   }
-
-  return NextResponse.json({ ok: true, status: 'building' })
 }
