@@ -5,12 +5,13 @@ export const qstash = new Client({
 })
 
 export function getWorkerUrl(): string {
+  // Use CUSTOM_WORKER_URL if set, otherwise fall back to VERCEL_URL
+  if (process.env.CUSTOM_WORKER_URL) {
+    return `${process.env.CUSTOM_WORKER_URL}/api/generate-worker`
+  }
   const vercelUrl = process.env.VERCEL_URL
   if (vercelUrl) {
     return `https://${vercelUrl}/api/generate-worker`
   }
-  // Fallback for local development — set APP_URL env var to your public URL
-  return process.env.APP_URL
-    ? `${process.env.APP_URL}/api/generate-worker`
-    : 'https://your-domain.vercel.app/api/generate-worker'
+  return 'https://atestatapp.vercel.app/api/generate-worker'
 }
