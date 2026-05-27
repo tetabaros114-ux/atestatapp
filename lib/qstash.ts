@@ -16,13 +16,13 @@ export const WORKER_URL = 'https://atestatapp.vercel.app/api/generate-worker'
 
 export async function publishJob(jobId: string, formData: unknown): Promise<string> {
   const qstash = getQStash()
-  const result = await qstash.publish({
+  const result = await qstash.publishJSON({
     url: WORKER_URL,
-    body: JSON.stringify({ jobId, formData }),
-    contentType: 'application/json',
+    body: { jobId, formData },
     retries: 2,
     timeout: 600,
   })
+  console.log('[publishJob] QStash result:', JSON.stringify(result))
   return typeof result === 'object' && result !== null && 'messageId' in result
     ? String(result.messageId)
     : String(result)

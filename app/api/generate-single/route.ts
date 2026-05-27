@@ -14,12 +14,17 @@ export async function POST(req: NextRequest) {
     }
 
     const jobId = uuidv4()
+    console.log('[generate-single] Generated jobId:', jobId)
 
     await setJob(jobId, {
       status: 'pending',
       step: 0,
       createdAt: Date.now(),
     })
+
+    // Verify it was saved
+    const saved = await getJob(jobId)
+    console.log('[generate-single] Job saved, retrieved back:', saved ? 'FOUND' : 'NOT FOUND')
 
     const result = await publishJob(jobId, formData)
     const messageId = typeof result === 'object' && result !== null && 'messageId' in result
