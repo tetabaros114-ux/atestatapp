@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { v4 as uuidv4 } from 'uuid'
 import { setJob } from '@/lib/redis'
-import { qstash, getWorkerUrl } from '@/lib/qstash'
+import { publishJob } from '@/lib/qstash'
 import type { SimpleFormData } from '@/types/atestat'
 
 export const maxDuration = 10
@@ -14,26 +14,17 @@ export async function POST(req: NextRequest) {
     }
 
     const jobId = uuidv4()
-    const workerUrl = getWorkerUrl()
-    if (!workerUrl) {
-      return NextResponse.json({ error: 'APP_URL not configured.' }, { status: 500 })
-    }
 
-    // Save job state to Redis
     await setJob(jobId, {
       status: 'pending',
       step: 0,
       createdAt: Date.now(),
     })
 
-    // Publish to QStash — QStash will call our worker webhook
-    const messageId = await qstash.publish({
-      url: workerUrl,
-      body: JSON.stringify({ jobId, formData }),
-      contentType: 'application/json',
-      retries: 2,
-      timeout: 600,
-    })
+    const result = await publishJob(jobId, formData)
+    const messageId = typeof result === 'object' && result !== null && 'messageId' in result
+      ? String((result as { messageId: string }).messageId)
+      : ''
 
     return NextResponse.json({ jobId, messageId })
   } catch (err) {

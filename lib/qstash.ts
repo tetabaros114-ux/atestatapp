@@ -4,14 +4,18 @@ export const qstash = new Client({
   token: process.env.QSTASH_TOKEN ?? '',
 })
 
-export function getWorkerUrl(): string {
-  if (process.env.CUSTOM_WORKER_URL) {
-    return `${process.env.CUSTOM_WORKER_URL}/api/generate-worker`
-  }
-  const vercelUrl = process.env.VERCEL_URL
-  if (vercelUrl) {
-    return `https://${vercelUrl}/api/generate-worker`
-  }
-  // Direct Vercel domain — always points to current production deployment
-  return 'https://atestatapp.vercel.app/api/generate-worker'
+// Always use this exact URL — Vercel domain always points to current production
+export const WORKER_URL = 'https://atestatapp.vercel.app/api/generate-worker'
+
+export async function publishJob(jobId: string, formData: unknown): Promise<string> {
+  const result = await qstash.publish({
+    url: WORKER_URL,
+    body: JSON.stringify({ jobId, formData }),
+    contentType: 'application/json',
+    retries: 2,
+    timeout: 600,
+  })
+  return typeof result === 'object' && result !== null && 'messageId' in result
+    ? String(result.messageId)
+    : String(result)
 }
