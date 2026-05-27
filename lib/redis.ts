@@ -1,15 +1,10 @@
 import { Redis } from '@upstash/redis'
 
-let _redis: Redis | null = null
-
-function getRedis(): Redis {
-  if (!_redis) {
-    const url = process.env.UPSTASH_REDIS_REST_URL ?? ''
-    const token = process.env.UPSTASH_REDIS_REST_TOKEN ?? ''
-    console.warn('[redis] INIT — URL present:', !!url, '| Token present:', !!token, '| URL:', url.slice(0, 20))
-    _redis = new Redis({ url, token })
-  }
-  return _redis
+function createRedis(): Redis {
+  return new Redis({
+    url: process.env.UPSTASH_REDIS_REST_URL!,
+    token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+  })
 }
 
 export interface JobState {
@@ -22,26 +17,20 @@ export interface JobState {
 }
 
 export async function getJob(id: string): Promise<JobState | null> {
-  const redis = getRedis()
+  const redis = createRedis()
   const raw = await redis.get<string>(id)
   if (!raw) return null
   try {
-    return JSON.parse(raw as string) as JobState
+    const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw
+    return parsed as JobState
   } catch {
     return null
   }
 }
 
 export async function setJob(id: string, state: JobState, ttlSeconds = 3600): Promise<void> {
-  const redis = getRedis()
-  console.log('[redis] setJob called:', id, JSON.stringify(state))
-  try {
-    await redis.set(id, JSON.stringify(state), { ex: ttlSeconds })
-    console.log('[redis] setJob OK:', id)
-  } catch (err) {
-    console.error('[redis] setJob FAILED:', id, err instanceof Error ? err.message : String(err))
-    throw err
-  }
+  const redis = createRedis()
+  await redis.set(id, JSON.stringify(state), { ex: ttlSeconds })
 }
 
 export async function updateJobStep(
