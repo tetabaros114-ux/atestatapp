@@ -3,9 +3,27 @@ import { lookupFirmaSafe } from '@/lib/claude'
 import { generateContent } from '@/lib/claude'
 import { buildDocx } from '@/lib/docx-builder'
 import { put } from '@vercel/blob'
-import type { AtestateInput, SimpleFormData } from '@/types/atestat'
+import type { AtestateInput, SimpleFormData, FirmaData } from '@/types/atestat'
 
-function buildInput(formData: SimpleFormData): AtestateInput {
+function buildInput(formData: SimpleFormData, lookupData: Partial<FirmaData> = {}): AtestateInput {
+  const firmaDefaults = {
+    nume: formData.firma_nume,
+    forma_juridica: formData.firma_forma_juridica,
+    domeniu: formData.firma_domeniu,
+    cif: lookupData.cif ?? '',
+    rc: lookupData.rc ?? '',
+    caen_cod: lookupData.caen_cod ?? '',
+    caen_desc: lookupData.caen_desc ?? '',
+    adresa: lookupData.adresa ?? '',
+    telefon: lookupData.telefon ?? '',
+    email: lookupData.email ?? '',
+    iban: lookupData.iban ?? '',
+    banca: lookupData.banca ?? '',
+    an_infiintare: lookupData.an_infiintare ?? '',
+    angajati: lookupData.angajati ?? 0,
+    produse_servicii: lookupData.produse_servicii ?? [],
+    clienti_principali: lookupData.clienti_principali ?? [],
+  }
   return {
     student_name: formData.student_name,
     clasa: formData.clasa,
@@ -13,24 +31,7 @@ function buildInput(formData: SimpleFormData): AtestateInput {
     liceu: formData.liceu,
     specializare: formData.specializare,
     tema: formData.tema,
-    firma: {
-      nume: formData.firma_nume,
-      forma_juridica: formData.firma_forma_juridica,
-      domeniu: formData.firma_domeniu,
-      cif: '',
-      rc: '',
-      caen_cod: '',
-      caen_desc: '',
-      adresa: '',
-      telefon: '',
-      email: '',
-      iban: '',
-      banca: '',
-      an_infiintare: '',
-      angajati: 0,
-      produse_servicii: [],
-      clienti_principali: [],
-    },
+    firma: firmaDefaults,
     an: formData.an,
     emblema_base64: formData.emblema_base64,
     extra_info: formData.extra_info,
@@ -47,7 +48,7 @@ export const generateAtestatJob = inngest.createFunction(
   async ({ event, step }) => {
     const { formData } = event.data as { formData: SimpleFormData }
 
-    await step.run('lookup-firma', async () => {
+    const lookupData = await step.run('lookup-firma', async () => {
       try {
         return await lookupFirmaSafe(
           formData.firma_nume,
@@ -59,12 +60,14 @@ export const generateAtestatJob = inngest.createFunction(
       }
     })
 
+    const input = buildInput(formData, lookupData)
+
     const content = await step.run('generate-content', async () => {
-      return await generateContent(buildInput(formData))
+      return await generateContent(input)
     })
 
     const result = await step.run('build-docx', async () => {
-      const docxBuffer = await buildDocx(content, buildInput(formData))
+      const docxBuffer = await buildDocx(content, input)
 
       const lastName = formData.student_name.split(' ')[0] ?? 'Student'
       const firmaShort = formData.firma_nume
