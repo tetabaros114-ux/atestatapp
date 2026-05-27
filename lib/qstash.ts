@@ -22,7 +22,6 @@ export async function publishJob(jobId: string, formData: unknown): Promise<stri
     retries: 2,
     timeout: 600,
   })
-  console.log('[publishJob] QStash result:', JSON.stringify(result))
   return typeof result === 'object' && result !== null && 'messageId' in result
     ? String(result.messageId)
     : String(result)
