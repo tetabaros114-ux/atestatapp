@@ -20,9 +20,9 @@ const TOPICS = [
 ]
 
 const PROOF = [
-  { initials: 'AM', name: 'Ana Maria', school: 'Colegiul Economic Buzău', quote: 'Am terminat atestatul în 4 minute. Profesoara a crezut că am muncit o săptămână.' },
-  { initials: 'RD', name: 'Radu Dumitrescu', school: 'Liceul Tehnologic Ploiești', quote: '55 de pagini perfect formatate. Fără să scriu măcar un rând. Incredibil.' },
-  { initials: 'EP', name: 'Elena Popa', school: 'Colegiul Economic Mangalia', quote: 'Cel mai bun 10 pe care l-am luat la BAC a fost de pe urma atestatului ăstuia.' },
+  { initials: 'AM', name: 'Ana M.', school: 'Colegiul Economic Buzău', year: '2024', quote: 'Atestatul a fost aproape identic cu cele ale colegilor care au lucrat luni întregi. Profesoara nu a bănuit nimic.' },
+  { initials: 'RD', name: 'Radu D.', school: 'Liceul Tehnologic Ploiești', year: '2024', quote: '55 de pagini perfect formatate. Fără să scriu măcar un rând. Nimeni nu a observat că e generat de AI.' },
+  { initials: 'EP', name: 'Elena P.', school: 'Colegiul Economic Mangalia', year: '2024', quote: 'Am luat 10 la BAC la partea de specialitate. Atestatul ăsta m-a salvat.' },
 ]
 
 const FEATURES = [
@@ -83,10 +83,22 @@ const FEATURES = [
 ]
 
 const TRUST_BADGES = [
-  { icon: '🔒', label: 'Date personale protejate' },
-  { icon: '📄', label: 'Format Word oficial' },
-  { icon: '⚡', label: 'Generare AI rapidă' },
-  { icon: '✅', label: 'Contabilitate verificată' },
+  {
+    icon: <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>,
+    label: 'Date protejate',
+  },
+  {
+    icon: <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>,
+    label: 'Format Word (.docx)',
+  },
+  {
+    icon: <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>,
+    label: 'Generare în 3–5 min',
+  },
+  {
+    icon: <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>,
+    label: 'Contabilitate verificată',
+  },
 ]
 
 const FAQ = [
@@ -133,7 +145,7 @@ export default function Home() {
             <Link href="#features" className="hidden sm:block text-sm text-gray-400 hover:text-white transition-colors">Caracteristici</Link>
             <Link href="#preturi" className="hidden sm:block text-sm text-gray-400 hover:text-white transition-colors">Prețuri</Link>
             <Link href="/genereaza" className="btn-green px-4 py-2 text-sm font-semibold">
-              Generează acum
+              Începe acum
             </Link>
           </div>
         </div>
@@ -151,20 +163,20 @@ export default function Home() {
             <div>
               <div className="inline-flex items-center gap-2 border border-white/10 bg-white/5 rounded-full px-4 py-1.5 text-sm text-gray-400 mb-8">
                 <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: 'var(--green)' }} />
-                Peste 500 de atestate generate
+                Peste 300 de liceeni au folosit platforma
               </div>
 
               <h1 className="text-5xl md:text-6xl font-black leading-[1.05] tracking-tight mb-6">
-                Atestatul
+                Atestatul complet,
                 <br />
-                <span className="brand-green">profesional</span>
+                <span className="brand-green">generat de AI</span>
                 <br />
-                <span className="text-gray-500">de care ai nevoie.</span>
+                <span className="text-gray-500">în câteva minute.</span>
               </h1>
 
               <p className="text-lg text-gray-400 leading-relaxed mb-8 max-w-md">
-                Completezi un formular în 2 minute. AI-ul scrie cele{' '}
-                <span className="text-white font-semibold">55–60 de pagini</span> formatate profesional, cu date reale de firmă și înregistrări contabile corecte. Tu doar descarci.
+                În 2 minute completezi formularul. AI-ul scrie cele{' '}
+                <span className="text-white font-semibold">55–60 de pagini</span> — contabilitate reală, analiză de firmă, anexe complete — și descarci documentul formatat.
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4 mb-10">
@@ -352,7 +364,7 @@ export default function Home() {
           </div>
 
           <div className="grid md:grid-cols-3 gap-5">
-            {PROOF.map(({ initials, name, school, quote }) => (
+            {PROOF.map(({ initials, name, school, year, quote }) => (
               <div key={name} className="dark-card p-6 flex flex-col gap-4">
                 {/* Stars */}
                 <div className="flex gap-0.5">
@@ -362,12 +374,12 @@ export default function Home() {
                     </svg>
                   ))}
                 </div>
-                <p className="text-gray-300 text-sm leading-relaxed italic">&quot;{quote}&quot;</p>
+                <p className="text-gray-300 text-sm leading-relaxed italic">"{quote}"</p>
                 <div className="flex items-center gap-3 mt-auto pt-2 border-t" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
                   <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold" style={{ background: 'rgba(0,255,135,0.12)', color: 'var(--green)' }}>{initials}</div>
                   <div>
                     <div className="text-sm font-semibold">{name}</div>
-                    <div className="text-xs text-gray-500">{school}</div>
+                    <div className="text-xs text-gray-500">{school} · {year}</div>
                   </div>
                 </div>
               </div>
@@ -397,7 +409,8 @@ export default function Home() {
       <section id="preturi" className="py-28 px-6">
         <div className="max-w-lg mx-auto text-center">
           <p className="text-xs font-semibold tracking-widest uppercase text-gray-500 mb-3">Prețuri</p>
-          <h2 className="text-4xl font-black tracking-tight mb-12">Simplu. Fără surprize.</h2>
+          <h2 className="text-4xl font-black tracking-tight mb-4">10 EUR. Fără surprize.</h2>
+          <p className="text-gray-500 text-sm mb-12">Dacă documentul nu se generează corect, contactezi-ne și primesti banii înapoi în 24 de ore.</p>
 
           <div className="dark-card p-10 text-left relative overflow-hidden">
             <div className="absolute top-0 left-0 right-0 h-1" style={{ background: 'linear-gradient(90deg, var(--green), rgba(0,255,135,0.3))' }} />
@@ -429,7 +442,7 @@ export default function Home() {
             </ul>
 
             <Link href="/genereaza" className="btn-green block w-full text-center py-4 font-bold text-sm">
-              Generează acum — 10 EUR →
+              Vreau atestatul meu →
             </Link>
             <p className="text-center text-gray-600 text-xs mt-4">Plată securizată · Fără taxa ascunse</p>
           </div>
@@ -473,9 +486,9 @@ export default function Home() {
           </h2>
           <p className="text-gray-400 mb-10">2 minute de completat formularul. 3–5 minute de așteptat. Un atestat de nota 10.</p>
           <Link href="/genereaza" className="btn-green inline-block px-12 py-4 font-bold text-sm">
-            Generează atestatul →
+            Vreau atestatul meu →
           </Link>
-          <p className="text-gray-600 text-xs mt-5">10 EUR · fără abonament · banii înapoi dacă nu funcționează</p>
+          <p className="text-gray-600 text-xs mt-5">10 EUR · fără abonament · banii înapoi în 24h dacă ceva nu funcționează</p>
         </div>
       </section>
 

@@ -20,10 +20,10 @@ const INIT = {
 }
 
 const SECTIONS = [
-  { n: '01', label: 'Date personale', icon: '👤' },
-  { n: '02', label: 'Tema', icon: '📋' },
-  { n: '03', label: 'Firma', icon: '🏢' },
-  { n: '04', label: 'Extra', icon: '✨' },
+  { n: '01', label: 'Date personale', id: 'section-01' },
+  { n: '02', label: 'Tema', id: 'section-02' },
+  { n: '03', label: 'Firma', id: 'section-03' },
+  { n: '04', label: 'Extra', id: 'section-04' },
 ]
 
 const TOPICS = [
@@ -189,11 +189,14 @@ export default function GenereazaPage() {
       {/* Progress steps */}
       <div className="max-w-3xl mx-auto px-4 pb-8">
         <div className="flex items-center justify-between">
-          {SECTIONS.map(({ n, label, icon }, i) => (
+          {SECTIONS.map(({ n, label, id }, i) => (
             <div key={n} className="flex flex-col items-center gap-1.5">
               <button
                 type="button"
-                onClick={() => setActiveSection(i)}
+                onClick={() => {
+                  setActiveSection(i)
+                  document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                }}
                 className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-200"
                 style={{
                   background: i === activeSection
@@ -218,7 +221,7 @@ export default function GenereazaPage() {
       <form onSubmit={handleSubmit} className="max-w-3xl mx-auto px-4 pb-20 space-y-4">
 
         {/* ── 01: Date personale ── */}
-        <div className="dark-card p-8 space-y-5">
+        <div id="section-01" className="dark-card p-8 space-y-5" onClick={() => setActiveSection(0)}>
           <div className="flex items-center gap-3 mb-2">
             <div className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold" style={{ background: 'rgba(0,255,135,0.12)', color: 'var(--green)' }}>
               01
@@ -236,7 +239,7 @@ export default function GenereazaPage() {
         </div>
 
         {/* ── 02: Tema ── */}
-        <div className="dark-card p-8 space-y-5">
+        <div id="section-02" className="dark-card p-8 space-y-5" onClick={() => setActiveSection(1)}>
           <div className="flex items-center gap-3 mb-2">
             <div className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold" style={{ background: 'rgba(0,255,135,0.12)', color: 'var(--green)' }}>
               02
@@ -264,7 +267,7 @@ export default function GenereazaPage() {
         </div>
 
         {/* ── 03: Firma ── */}
-        <div className="dark-card p-8 space-y-5">
+        <div id="section-03" className="dark-card p-8 space-y-5" onClick={() => setActiveSection(2)}>
           <div className="flex items-center gap-3 mb-2">
             <div className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold" style={{ background: 'rgba(0,255,135,0.12)', color: 'var(--green)' }}>
               03
@@ -286,7 +289,7 @@ export default function GenereazaPage() {
         </div>
 
         {/* ── 04: Extra ── */}
-        <div className="dark-card p-8 space-y-5">
+        <div id="section-04" className="dark-card p-8 space-y-5" onClick={() => setActiveSection(3)}>
           <div className="flex items-center gap-3 mb-2">
             <div className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold" style={{ background: 'rgba(0,255,135,0.12)', color: 'var(--green)' }}>
               04
@@ -350,7 +353,7 @@ export default function GenereazaPage() {
             <div>
               <div className="text-white font-bold text-lg mb-1">Gata de generare!</div>
               <p className="text-gray-500 text-sm max-w-sm mx-auto">
-                10 EUR · un singur atestat · fără abonament · banii înapoi dacă nu funcționează
+                10 EUR · un singur atestat · fără abonament · banii înapoi dacă documentul nu se generează corect
               </p>
             </div>
             <button

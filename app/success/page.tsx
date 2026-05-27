@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import type { SimpleFormData } from '@/types/atestat'
@@ -39,6 +39,7 @@ export default function SuccessPage() {
   const [filename, setFilename] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
   const [progress, setProgress] = useState(5)
+  const runIdRef = useRef('')
 
   useEffect(() => {
     const raw = sessionStorage.getItem('atestateInput')
@@ -61,6 +62,7 @@ export default function SuccessPage() {
         throw new Error(err.error || `HTTP ${res.status}`)
       }
       const { runId } = await res.json()
+      runIdRef.current = runId
       const result = await pollStatus(runId, setProgress)
       setDownloadUrl(result.downloadUrl)
       setFilename(result.filename)
@@ -118,43 +120,39 @@ export default function SuccessPage() {
                   <p className="text-gray-500 text-sm">AI-ul scrie documentul. Poate dura 3–5 minute.</p>
                 </div>
 
-                {/* Progress bar */}
+                {/* Progress bar — animated, not misleading */}
                 <div className="space-y-2">
                   <div className="w-full rounded-full h-2 overflow-hidden" style={{ background: 'rgba(255,255,255,0.05)' }}>
                     <div
-                      className="h-2 rounded-full transition-all duration-1000"
+                      className="h-2 rounded-full"
                       style={{ width: `${progress}%`, background: 'var(--green)' }}
                     />
                   </div>
-                  <div className="flex justify-between text-xs text-gray-600">
-                    <span>Se caută firma...</span>
-                    <span>{progress}%</span>
-                  </div>
+                  <p className="text-xs text-gray-600 text-center">
+                    {progress < 40 ? 'Se caută datele firmei...' : progress < 75 ? 'AI-ul scrie documentul...' : 'Se construiește fișierul Word...'}
+                  </p>
                 </div>
 
                 {/* Step indicators */}
                 <div className="space-y-2 text-left">
                   {[
-                    { label: 'Se caută datele firmei', pct: 20 },
-                    { label: 'AI-ul scrie documentul', pct: 60 },
-                    { label: 'Se construiește fișierul Word', pct: 85 },
-                  ].map(({ label, pct }) => (
+                    { label: 'Se caută datele firmei', done: progress >= 20 },
+                    { label: 'AI-ul scrie documentul', done: progress >= 60 },
+                    { label: 'Se construiește fișierul Word', done: progress >= 85 },
+                  ].map(({ label, done }) => (
                     <div key={label} className="flex items-center gap-3 text-sm">
                       <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0
-                        ${progress >= pct ? '' : 'opacity-30'}`}
-                        style={{ background: progress >= pct ? 'var(--green)' : 'rgba(255,255,255,0.05)', color: progress >= pct ? '#080808' : '#555' }}>
-                        {progress >= pct ? '✓' : '○'}
+                        ${done ? '' : 'opacity-30'}`}
+                        style={{ background: done ? 'var(--green)' : 'rgba(255,255,255,0.05)', color: done ? '#080808' : '#555' }}>
+                        {done ? '✓' : '○'}
                       </div>
-                      <span style={{ color: progress >= pct ? '#ccc' : '#555' }}>{label}</span>
+                      <span style={{ color: done ? '#ccc' : '#555' }}>{label}</span>
                     </div>
                   ))}
                 </div>
 
                 <p className="text-gray-700 text-xs">
-                  Monitorizează în{" "}
-                  <a href="https://app.inngest.com" target="_blank" rel="noopener noreferrer" className="underline hover:text-gray-400">
-                    app.inngest.com
-                  </a>
+                  Nu închide această pagină — linkul de descărcare apare automat aici.
                 </p>
               </div>
             </div>
@@ -188,11 +186,7 @@ export default function SuccessPage() {
                   </a>
                 ) : (
                   <p className="text-gray-500 text-sm">
-                    Verifică în{" "}
-                    <a href="https://app.inngest.com" target="_blank" rel="noopener noreferrer" className="underline">
-                      app.inngest.com
-                    </a>{" "}
-                    pentru linkul de descărcare.
+                    Linkul de descărcare va apărea în curând. Contactează-ne dacă nu se încarcă în 5 minute.
                   </p>
                 )}
 
@@ -231,10 +225,7 @@ export default function SuccessPage() {
                 </div>
 
                 <p className="text-gray-700 text-xs">
-                  Verifică rularea în{" "}
-                  <a href="https://app.inngest.com" target="_blank" rel="noopener noreferrer" className="underline hover:text-gray-400">
-                    app.inngest.com
-                  </a>
+                  Contactează-ne la contact@atestatapp.ro dacă problema persistă.
                 </p>
               </div>
             </div>

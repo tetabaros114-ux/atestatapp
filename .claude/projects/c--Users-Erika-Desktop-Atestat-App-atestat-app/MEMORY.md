@@ -1,0 +1,3 @@
+- [user-erika](user-erika.md) — Developer building atestatapp.ro, direct communication style
+- [project-atestatapp](project-atestatapp.md) — Project overview, architecture, env vars, problem history
+- [feedback-atestatapp-architecture](feedback-atestatapp-architecture.md) — Critical rules: Inngest for >60s work, streaming required, no Vercel KV
