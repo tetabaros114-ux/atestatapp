@@ -19,46 +19,12 @@ const INIT = {
   extra_info: '',
 }
 
-function Field({
-  label,
-  field,
-  placeholder,
-  required = true,
-  type = 'text',
-  form,
-  errors,
-  onChange,
-}: {
-  label: string
-  field: string
-  placeholder?: string
-  required?: boolean
-  type?: string
-  form: typeof INIT
-  errors: Record<string, string>
-  onChange: (field: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => void
-}) {
-  return (
-    <div>
-      <label className="block text-sm font-medium text-gray-300 mb-1.5">
-        {label}{' '}
-        {required ? (
-          <span style={{ color: 'var(--green)' }}>*</span>
-        ) : (
-          <span className="text-gray-600 font-normal">(opțional)</span>
-        )}
-      </label>
-      <input
-        type={type}
-        value={form[field as keyof typeof INIT]}
-        onChange={onChange(field)}
-        placeholder={placeholder}
-        className={`input-dark ${errors[field] ? 'error' : ''}`}
-      />
-      {errors[field] && <p className="text-red-400 text-xs mt-1">{errors[field]}</p>}
-    </div>
-  )
-}
+const SECTIONS = [
+  { n: '01', label: 'Date personale', icon: '👤' },
+  { n: '02', label: 'Tema', icon: '📋' },
+  { n: '03', label: 'Firma', icon: '🏢' },
+  { n: '04', label: 'Extra', icon: '✨' },
+]
 
 const TOPICS = [
   'Disponibilitățile bănești',
@@ -80,53 +46,85 @@ const TOPICS = [
 ]
 
 const DOMENII = [
-  'Comerț cu amănuntul',
-  'Comerț cu ridicata',
-  'Producție',
-  'IT și Software',
-  'Turism și HoReCa',
-  'Construcții',
-  'Sănătate',
-  'Agricultură',
-  'Transport și Logistică',
-  'Servicii financiare',
-  'Educație',
-  'Altul',
+  'Comerț cu amănuntul', 'Comerț cu ridicata', 'Producție', 'IT și Software',
+  'Turism și HoReCa', 'Construcții', 'Sănătate', 'Agricultură',
+  'Transport și Logistică', 'Servicii financiare', 'Educație', 'Altul',
 ]
 
 const FORME_JURIDICE = ['S.R.L.', 'S.A.', 'R.A.', 'S.N.C.', 'S.C.S.', 'P.F.A.', 'Î.I.', 'Î.F.']
 
+function Field({ label, field, placeholder, required = true, form, errors, onChange }: {
+  label: string; field: string; placeholder?: string; required?: boolean
+  form: typeof INIT; errors: Record<string, string>
+  onChange: (field: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => void
+}) {
+  return (
+    <div>
+      <label className="block text-sm font-medium text-gray-300 mb-2">
+        {label}{required && <span className="ml-0.5" style={{ color: 'var(--green)' }}>*</span>}
+      </label>
+      <input
+        type="text"
+        value={form[field as keyof typeof INIT]}
+        onChange={onChange(field)}
+        placeholder={placeholder}
+        className={`input-dark ${errors[field] ? 'border-red-500/60' : ''}`}
+      />
+      {errors[field] && <p className="text-red-400 text-xs mt-1.5">{errors[field]}</p>}
+    </div>
+  )
+}
+
+function SelectField({ label, field, options, required = true, placeholder, form, errors, onChange }: {
+  label: string; field: string; options: string[]; required?: boolean; placeholder?: string
+  form: typeof INIT; errors: Record<string, string>
+  onChange: (field: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => void
+}) {
+  return (
+    <div>
+      <label className="block text-sm font-medium text-gray-300 mb-2">
+        {label}{required && <span className="ml-0.5" style={{ color: 'var(--green)' }}>*</span>}
+      </label>
+      <select
+        value={form[field as keyof typeof INIT]}
+        onChange={onChange(field)}
+        className={`input-dark select-dark ${errors[field] ? 'border-red-500/60' : ''}`}
+      >
+        <option value="">{placeholder ?? `— Alege —`}</option>
+        {options.map(o => <option key={o} value={o}>{o}</option>)}
+      </select>
+      {errors[field] && <p className="text-red-400 text-xs mt-1.5">{errors[field]}</p>}
+    </div>
+  )
+}
+
 export default function GenereazaPage() {
   const router = useRouter()
   const fileRef = useRef<HTMLInputElement>(null)
-
   const [form, setForm] = useState(INIT)
   const [emblema, setEmblema] = useState<File | null>(null)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [submitting, setSubmitting] = useState(false)
+  const [activeSection, setActiveSection] = useState(0)
 
-  const set =
-    (field: string) =>
+  const set = (field: string) =>
     (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-      setForm((prev) => ({ ...prev, [field]: e.target.value }))
-      setErrors((prev) => ({ ...prev, [field]: '' }))
+      setForm(prev => ({ ...prev, [field]: e.target.value }))
+      setErrors(prev => ({ ...prev, [field]: '' }))
     }
 
   const validate = () => {
     const errs: Record<string, string> = {}
-    const req = (key: string, label: string) => {
-      if (!form[key as keyof typeof INIT]?.trim()) errs[key] = `${label} este obligatoriu.`
-    }
+    const req = (k: string, l: string) => { if (!form[k as keyof typeof INIT]?.trim()) errs[k] = `${l} este obligatoriu.` }
     req('student_name', 'Numele elevului')
     req('clasa', 'Clasa')
     req('profesor_coordonator', 'Profesorul coordonator')
     req('liceu', 'Liceul')
     req('specializare', 'Specializarea')
-    if (!form.tema) errs.tema = 'Tema este obligatorie.'
-    if (form.tema === 'Altă temă' && !form.tema_custom.trim())
-      errs.tema_custom = 'Introdu tema personalizată.'
+    if (!form.tema) errs.tema = 'Alege o temă.'
+    if (form.tema === 'Altă temă' && !form.tema_custom.trim()) errs.tema_custom = 'Scrie tema personalizată.'
     req('firma_nume', 'Denumirea firmei')
-    if (!form.firma_domeniu) errs.firma_domeniu = 'Domeniul este obligatoriu.'
+    if (!form.firma_domeniu) errs.firma_domeniu = 'Alege un domeniu.'
     setErrors(errs)
     return Object.keys(errs).length === 0
   }
@@ -138,7 +136,6 @@ export default function GenereazaPage() {
       return
     }
     setSubmitting(true)
-
     let emblema_base64: string | undefined
     if (emblema) {
       emblema_base64 = await new Promise<string>((resolve) => {
@@ -147,270 +144,223 @@ export default function GenereazaPage() {
         reader.readAsDataURL(emblema)
       })
     }
-
-    const tema =
-      form.tema === 'Altă temă'
-        ? form.tema_custom
-        : `${form.tema} la ${form.firma_nume}`
-
+    const tema = form.tema === 'Altă temă' ? form.tema_custom : `${form.tema} la ${form.firma_nume}`
     const data: SimpleFormData = {
-      student_name: form.student_name,
-      clasa: form.clasa,
-      profesor_coordonator: form.profesor_coordonator,
-      liceu: form.liceu,
-      specializare: form.specializare,
-      tema,
-      firma_nume: form.firma_nume,
-      firma_forma_juridica: form.firma_forma_juridica,
-      firma_domeniu: form.firma_domeniu,
-      extra_info: form.extra_info || undefined,
-      emblema_base64,
-      an: new Date().getFullYear().toString(),
+      student_name: form.student_name, clasa: form.clasa,
+      profesor_coordonator: form.profesor_coordonator, liceu: form.liceu,
+      specializare: form.specializare, tema,
+      firma_nume: form.firma_nume, firma_forma_juridica: form.firma_forma_juridica,
+      firma_domeniu: form.firma_domeniu, extra_info: form.extra_info || undefined,
+      emblema_base64, an: new Date().getFullYear().toString(),
     }
-
     sessionStorage.setItem('atestateInput', JSON.stringify(data))
     router.push('/success')
   }
 
-  const selectCls = (field: string) =>
-    `input-dark ${errors[field] ? 'error' : ''}`
-
   return (
-    <div className="min-h-screen bg-[#0a0a0a]">
-      {/* Navbar */}
-      <nav className="fixed top-0 inset-x-0 z-50 border-b border-white/5 bg-[#0a0a0a]/90 backdrop-blur-md">
-        <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-          <Link href="/" className="text-xl font-bold tracking-tight">
-            Atestat<span className="brand-green">App</span>
+    <div className="min-h-screen" style={{ background: '#080808' }}>
+
+      {/* Nav */}
+      <nav className="fixed top-0 inset-x-0 z-50 border-b border-white/6 bg-[#080808]/90 backdrop-blur-xl">
+        <div className="max-w-3xl mx-auto px-6 py-4 flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: 'var(--green)', boxShadow: '0 0 16px rgba(0,255,135,0.3)' }}>
+              <span className="text-xs font-black text-[#080808]">A</span>
+            </div>
+            <span className="text-lg font-bold tracking-tight">Atestat<span className="brand-green">App</span></span>
           </Link>
-          <span className="text-gray-500 text-sm hidden sm:block">Generează atestat</span>
+          <div className="flex items-center gap-2 text-sm">
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold" style={{ background: 'rgba(0,255,135,0.1)', color: 'var(--green)' }}>
+              <span>✓</span>
+              Plătești doar 10 EUR
+            </div>
+          </div>
         </div>
       </nav>
 
-      <form onSubmit={handleSubmit} className="max-w-2xl mx-auto px-4 pt-28 pb-16 space-y-5">
-        <div className="text-center mb-10">
-          <h1 className="text-3xl font-bold text-white mb-2">
-            Generează <span className="brand-green">atestatul tău</span>
-          </h1>
-          <p className="text-gray-500 text-sm">
-            Câmpurile cu <span style={{ color: 'var(--green)' }}>*</span> sunt obligatorii.
-          </p>
+      {/* Header */}
+      <div className="pt-28 pb-8 px-4 max-w-3xl mx-auto text-center">
+        <h1 className="text-3xl font-black tracking-tight mb-3">
+          Completează formularul
+        </h1>
+        <p className="text-gray-500 text-sm">Câmpurile cu <span style={{ color: 'var(--green)' }}>*</span> sunt obligatorii. Ia-ți 2 minute.</p>
+      </div>
+
+      {/* Progress steps */}
+      <div className="max-w-3xl mx-auto px-4 pb-8">
+        <div className="flex items-center justify-between">
+          {SECTIONS.map(({ n, label, icon }, i) => (
+            <div key={n} className="flex flex-col items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => setActiveSection(i)}
+                className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-200"
+                style={{
+                  background: i === activeSection
+                    ? 'var(--green)'
+                    : i < activeSection
+                    ? 'rgba(0,255,135,0.2)'
+                    : 'rgba(255,255,255,0.05)',
+                  color: i <= activeSection ? '#080808' : '#555',
+                  border: i === activeSection ? 'none' : '1px solid rgba(255,255,255,0.1)',
+                }}
+              >
+                {i < activeSection ? '✓' : n}
+              </button>
+              <span className="text-[10px] hidden sm:block" style={{ color: i === activeSection ? 'var(--green)' : '#555' }}>{label}</span>
+            </div>
+          ))}
+          {/* Connecting lines */}
+          <div className="flex-1 mx-2 h-px" style={{ background: 'linear-gradient(90deg, rgba(0,255,135,0.3) 0%, rgba(0,255,135,0.3) 100%)' }} />
         </div>
+      </div>
 
-        {Object.keys(errors).length > 0 && (
-          <div
-            className="rounded-xl px-5 py-4 text-sm"
-            style={{
-              background: 'rgba(248,113,113,0.08)',
-              border: '1px solid rgba(248,113,113,0.25)',
-              color: '#f87171',
-            }}
-          >
-            Există câmpuri incomplete. Verifică câmpurile marcate mai jos.
+      <form onSubmit={handleSubmit} className="max-w-3xl mx-auto px-4 pb-20 space-y-4">
+
+        {/* ── 01: Date personale ── */}
+        <div className="dark-card p-8 space-y-5">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold" style={{ background: 'rgba(0,255,135,0.12)', color: 'var(--green)' }}>
+              01
+            </div>
+            <h2 className="font-bold text-base">Date personale</h2>
           </div>
-        )}
 
-        {/* ── 1. Date personale ── */}
-        <section className="dark-card p-6 space-y-4">
-          <h2
-            className="font-bold text-base pb-3 border-b flex items-center gap-2"
-            style={{ borderColor: 'rgba(255,255,255,0.06)', color: 'var(--green)' }}
-          >
-            <span className="opacity-60 text-sm font-mono">01</span> Date personale
-          </h2>
-          <div className="grid sm:grid-cols-2 gap-4">
+          <div className="grid sm:grid-cols-2 gap-5">
             <Field label="Nume complet elev" field="student_name" placeholder="ex: Popescu Maria Ioana" form={form} errors={errors} onChange={set} />
             <Field label="Clasa" field="clasa" placeholder="ex: XII A" form={form} errors={errors} onChange={set} />
-            <Field label="Profesor coordonator" field="profesor_coordonator" placeholder="ex: Ionescu Dan" form={form} errors={errors} onChange={set} />
+            <Field label="Profesor coordonator" field="profesor_coordonator" placeholder="ex: Prof. Ionescu Dan" form={form} errors={errors} onChange={set} />
             <Field label="Liceu" field="liceu" placeholder="ex: Colegiul Economic Virgil Madgearu" form={form} errors={errors} onChange={set} />
           </div>
           <Field label="Specializare" field="specializare" placeholder="ex: Tehnician în Activități Economice" form={form} errors={errors} onChange={set} />
-        </section>
+        </div>
 
-        {/* ── 2. Tema ── */}
-        <section className="dark-card p-6 space-y-4">
-          <h2
-            className="font-bold text-base pb-3 border-b flex items-center gap-2"
-            style={{ borderColor: 'rgba(255,255,255,0.06)', color: 'var(--green)' }}
-          >
-            <span className="opacity-60 text-sm font-mono">02</span> Tema proiectului
-          </h2>
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1.5">
-              Tema <span style={{ color: 'var(--green)' }}>*</span>
-            </label>
-            <select value={form.tema} onChange={set('tema')} className={`${selectCls('tema')} select-dark`}>
-              <option value="">— Alege tema —</option>
-              {TOPICS.map((t) => (
-                <option key={t} value={t}>{t}</option>
-              ))}
-            </select>
-            {errors.tema && <p className="text-red-400 text-xs mt-1">{errors.tema}</p>}
+        {/* ── 02: Tema ── */}
+        <div className="dark-card p-8 space-y-5">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold" style={{ background: 'rgba(0,255,135,0.12)', color: 'var(--green)' }}>
+              02
+            </div>
+            <h2 className="font-bold text-base">Tema proiectului</h2>
           </div>
+
+          <SelectField label="Tema" field="tema" options={TOPICS} placeholder="— Alege o temă —" form={form} errors={errors} onChange={set} />
+
           {form.tema === 'Altă temă' && (
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1.5">
-                Tema personalizată <span style={{ color: 'var(--green)' }}>*</span>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Descriere temă <span style={{ color: 'var(--green)' }}>*</span>
               </label>
-              <input
-                type="text"
+              <textarea
                 value={form.tema_custom}
                 onChange={set('tema_custom')}
-                placeholder="ex: Gestiunea stocurilor la SC Exemplu SRL"
-                className={`input-dark ${errors.tema_custom ? 'error' : ''}`}
+                rows={2}
+                placeholder="ex: Gestiunea trezoreriei la SC Exemplu SRL"
+                className="input-dark resize-none"
               />
-              {errors.tema_custom && (
-                <p className="text-red-400 text-xs mt-1">{errors.tema_custom}</p>
-              )}
+              {errors.tema_custom && <p className="text-red-400 text-xs mt-1.5">{errors.tema_custom}</p>}
             </div>
           )}
-        </section>
+        </div>
 
-        {/* ── 3. Firma ── */}
-        <section className="dark-card p-6 space-y-4">
-          <div className="pb-3 border-b" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
-            <h2
-              className="font-bold text-base flex items-center gap-2"
-              style={{ color: 'var(--green)' }}
-            >
-              <span className="opacity-60 text-sm font-mono">03</span> Firma aleasă
-            </h2>
-            <p className="text-xs text-gray-500 mt-1.5 flex items-center gap-1.5">
-              <span style={{ color: 'var(--green)', opacity: 0.7 }}>✦</span>
-              Restul datelor (CIF, adresă, CAEN, angajați etc.) sunt completate automat de AI din surse publice.
-            </p>
+        {/* ── 03: Firma ── */}
+        <div className="dark-card p-8 space-y-5">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold" style={{ background: 'rgba(0,255,135,0.12)', color: 'var(--green)' }}>
+              03
+            </div>
+            <h2 className="font-bold text-base">Firma aleasă</h2>
           </div>
 
-          <Field label="Denumire firmă" field="firma_nume" placeholder="ex: SC KAUFLAND ROMANIA S.R.L." form={form} errors={errors} onChange={set} />
-
-          <div className="grid sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1.5">
-                Forma juridică <span style={{ color: 'var(--green)' }}>*</span>
-              </label>
-              <select
-                value={form.firma_forma_juridica}
-                onChange={set('firma_forma_juridica')}
-                className="input-dark select-dark"
-              >
-                {FORME_JURIDICE.map((f) => (
-                  <option key={f}>{f}</option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1.5">
-                Domeniu activitate <span style={{ color: 'var(--green)' }}>*</span>
-              </label>
-              <select
-                value={form.firma_domeniu}
-                onChange={set('firma_domeniu')}
-                className={`${selectCls('firma_domeniu')} select-dark`}
-              >
-                <option value="">— Alege domeniu —</option>
-                {DOMENII.map((d) => (
-                  <option key={d}>{d}</option>
-                ))}
-              </select>
-              {errors.firma_domeniu && (
-                <p className="text-red-400 text-xs mt-1">{errors.firma_domeniu}</p>
-              )}
-            </div>
+          <div className="p-4 rounded-xl text-sm space-y-1" style={{ background: 'rgba(0,255,135,0.03)', border: '1px solid rgba(0,255,135,0.12)' }}>
+            <p className="font-semibold text-gray-200">✦ AI-ul caută automat</p>
+            <p className="text-gray-500 text-xs">CIF, adresă, cod CAEN, număr angajați, dată înființare — totul din surse publice.</p>
           </div>
-        </section>
 
-        {/* ── 4. Extra ── */}
-        <section className="dark-card p-6 space-y-4">
-          <h2
-            className="font-bold text-base pb-3 border-b flex items-center gap-2"
-            style={{ borderColor: 'rgba(255,255,255,0.06)', color: 'var(--green)' }}
-          >
-            <span className="opacity-60 text-sm font-mono">04</span> Informații suplimentare
-          </h2>
+          <Field label="Denumire firmă" field="firma_nume" placeholder="ex: SC Kaufland Romania SRL" form={form} errors={errors} onChange={set} />
+
+          <div className="grid sm:grid-cols-2 gap-5">
+            <SelectField label="Formă juridică" field="firma_forma_juridica" options={FORME_JURIDICE} required={false} placeholder="— Alege —" form={form} errors={errors} onChange={set} />
+            <SelectField label="Domeniu" field="firma_domeniu" options={DOMENII} placeholder="— Alege domeniu —" form={form} errors={errors} onChange={set} />
+          </div>
+        </div>
+
+        {/* ── 04: Extra ── */}
+        <div className="dark-card p-8 space-y-5">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold" style={{ background: 'rgba(0,255,135,0.12)', color: 'var(--green)' }}>
+              04
+            </div>
+            <h2 className="font-bold text-base">Informații suplimentare</h2>
+          </div>
+
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1.5">
-              Instrucțiuni extra{' '}
-              <span className="text-gray-600 font-normal">(opțional)</span>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Instrucțiuni extra <span className="text-gray-600 font-normal">(opțional)</span>
             </label>
             <textarea
               value={form.extra_info}
               onChange={set('extra_info')}
               rows={3}
-              placeholder="ex: Concentrează-te pe angajații din magazine. Firma are 136 de locații în România."
+              placeholder="ex: Concentrează-te pe activitatea din magazine. Firma are 136 de locații în România."
               className="input-dark resize-none"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              Emblemă școală{' '}
-              <span className="text-gray-600 font-normal">(opțional — PNG/JPG, fundal alb)</span>
+            <label className="block text-sm font-medium text-gray-300 mb-3">
+              Emblemă școală <span className="text-gray-600 font-normal">(opțional)</span>
             </label>
             <div
-              className="border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-all duration-200"
+              className="border-2 border-dashed rounded-xl p-5 text-center cursor-pointer transition-all duration-200"
               style={{ borderColor: emblema ? 'rgba(0,255,135,0.4)' : 'rgba(255,255,255,0.1)' }}
               onClick={() => fileRef.current?.click()}
-              onMouseEnter={(e) => {
-                if (!emblema) (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(0,255,135,0.3)'
-              }}
-              onMouseLeave={(e) => {
-                if (!emblema) (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(255,255,255,0.1)'
-              }}
+              onMouseEnter={e => { if (!emblema) (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(0,255,135,0.3)' }}
+              onMouseLeave={e => { if (!emblema) (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(255,255,255,0.1)' }}
             >
               {emblema ? (
-                <div className="font-medium text-sm" style={{ color: 'var(--green)' }}>
-                  ✓ {emblema.name}
+                <div className="flex items-center justify-center gap-2">
+                  <svg className="w-4 h-4" style={{ color: 'var(--green)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                  <span className="text-sm font-medium" style={{ color: 'var(--green)' }}>{emblema.name}</span>
+                  <button type="button" className="text-xs text-gray-500 hover:text-gray-300 ml-2" onClick={e => { e.stopPropagation(); setEmblema(null) }}>×</button>
                 </div>
               ) : (
-                <>
-                  <div className="text-2xl mb-2 opacity-40">📷</div>
-                  <div className="text-gray-500 text-sm">Click pentru a încărca emblema</div>
-                  <div className="text-gray-600 text-xs mt-1">PNG sau JPG · fundal alb · max 5MB</div>
-                </>
+                <div className="space-y-1">
+                  <svg className="w-8 h-8 mx-auto text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+                  </svg>
+                  <p className="text-gray-500 text-sm">Click pentru a încărca emblema</p>
+                  <p className="text-gray-700 text-xs">PNG sau JPG · max 5MB</p>
+                </div>
               )}
             </div>
-            <input
-              ref={fileRef}
-              type="file"
-              accept="image/png,image/jpeg"
-              className="hidden"
-              onChange={(e) => {
+            <input ref={fileRef} type="file" accept="image/png,image/jpeg" className="hidden"
+              onChange={e => {
                 const file = e.target.files?.[0] || null
-                if (file && file.size > 5 * 1024 * 1024) {
-                  alert('Fișierul este prea mare. Maxim 5MB.')
-                  return
-                }
+                if (file && file.size > 5 * 1024 * 1024) { alert('Max 5MB.'); return }
                 setEmblema(file)
-              }}
-            />
+              }} />
           </div>
-        </section>
+        </div>
 
         {/* ── Submit ── */}
-        <div
-          className="dark-card p-8 text-center space-y-4 relative overflow-hidden"
-          style={{ borderColor: 'rgba(0,255,135,0.15)' }}
-        >
-          <div
-            className="absolute inset-0 pointer-events-none"
-            style={{
-              background: 'radial-gradient(ellipse 80% 60% at 50% 100%, rgba(0,255,135,0.06) 0%, transparent 70%)',
-            }}
-          />
-          <div className="relative z-10">
-            <div className="text-white font-bold text-lg mb-1">Totul este completat?</div>
-            <p className="text-gray-500 text-sm mb-6">
-              AI-ul caută automat datele firmei și generează documentul de ~55 de pagini.
-            </p>
+        <div className="dark-card p-8 text-center relative overflow-hidden">
+          <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse 80% 50% at 50% 100%, rgba(0,255,135,0.05) 0%, transparent 70%)' }} />
+          <div className="relative z-10 space-y-4">
+            <div>
+              <div className="text-white font-bold text-lg mb-1">Gata de generare!</div>
+              <p className="text-gray-500 text-sm max-w-sm mx-auto">
+                10 EUR · un singur atestat · fără abonament · banii înapoi dacă nu funcționează
+              </p>
+            </div>
             <button
               type="submit"
               disabled={submitting}
-              className="btn-green w-full md:w-auto px-10 py-4 text-base disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+              className="btn-green w-full sm:w-auto px-12 py-4 text-base font-bold disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {submitting ? 'Se procesează...' : 'Continuă spre plată — 10 EUR →'}
+              {submitting ? 'Se procesează...' : 'Continuă — 10 EUR →'}
             </button>
-            <p className="text-gray-600 text-xs mt-4">Plată securizată prin Stripe · Fără abonament</p>
+            <p className="text-gray-600 text-xs">Plată securizată · Inngest generează documentul în 3–5 minute</p>
           </div>
         </div>
       </form>
