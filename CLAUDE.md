@@ -1,112 +1,134 @@
 # AtestatApp — Claude Code / AI Agent Instructions
 
-See `.claude/projects/c--Users-Erika-Desktop-Atestat-App-atestat-app/MEMORY.md` for full context (user profile, project overview, critical feedback).
+See `.claude/projects/.../MEMORY.md` for full context.
 
 ## Critical Rules
-- **Inngest for >60s work** — Vercel kills containers immediately on response. Heavy work goes in `lib/inngest/generate-atestat.ts`
+- **Background jobs via QStash** — Vercel kills containers after HTTP response (300s limit). The 5–10 min generation runs as a QStash webhook at `/api/generate-worker`
 - **Streaming is mandatory** — `client.messages.stream()` with `max_tokens: 48000`. Never `client.messages.create()`
-- **Don't reduce max_tokens** — The 55–60 page JSON is large. Truncation breaks docx builder
-- **"Skip Deployment Protection"** — All Vercel env vars need this so Inngest can reach `/api/inngest`
-- **No @vercel/kv** — Not needed. Inngest handles job state internally
+- **Don't reduce max_tokens** — The 55–60 page JSON is large. Truncation breaks the docx builder
+- **QStash env vars need "Skip Deployment Protection"** — QStash calls `/api/generate-worker` from outside Vercel
 
 ## Project Overview
-**atestatapp.ro** — Romanian web platform that generates 55–60 page professional high-school graduation project documents (.docx). Users fill a form → AI looks up company data → AI generates structured JSON → Node.js builds a `.docx` file → user downloads it.
+**atestatapp.ro** — Romanian SaaS that generates 55–60 page graduation documents. Users fill a form → QStash queues a job → `/api/generate-worker` runs the full pipeline → frontend polls `/api/status/[id]`.
 
 ## Live URL
 https://atestatapp.ro
 
 ## Tech Stack
 - **Next.js 16** (App Router, TypeScript, Turbopack)
-- **Vercel Pro** ($20/month — required for 300s serverless timeout)
-- **Inngest** — Background job queue (handles the 5–10 min generation that exceeds Vercel's limits)
-  - Integration: https://vercel.com/integrations/inngest
-  - Dashboard: https://app.inngest.com
-  - Serves at `/api/inngest`
-- **Claude API** (`claude-sonnet-4-6`) — Streaming with `max_tokens: 48000` (mandatory for requests exceeding 10 min)
+- **Vercel Pro** (300s serverless timeout — QStash handles jobs outside this)
+- **Upstash QStash** — HTTP webhook-based queue. QStash calls `/api/generate-worker` as a separate HTTP request, completely outside Vercel's lifecycle
+- **Upstash Redis** — Stores job state (status, step, downloadUrl, filename, error) with 1h TTL
+- **Claude API** (`claude-sonnet-4-6`) — Streaming with `max_tokens: 48000`
 - **`docx` npm library (v9.6.1)** — Builds `.docx` server-side from Claude JSON
-- **`@vercel/blob`** — Stores generated `.docx` files, returns public download URLs
+- **`@vercel/blob`** — Stores generated `.docx`, returns public download URLs
 - **`uuid`** — Generates unique job IDs
 
-## Critical Architecture Notes
+## Architecture
 
-### Why Inngest?
-The full pipeline (lookup ~15s + Claude streaming generate ~5–10min + docx build ~5s + blob upload ~5s = ~6–10 min total) **cannot run in a Vercel serverless function**. Vercel Pro maxes at 300s and the `keepalive` background fetch trick is unreliable. Inngest runs the job in its own long-running infrastructure, completely outside Vercel's container lifecycle.
+```
+User submits form
+    ↓
+POST /api/generate-single
+    ↓
+1. Validate form data
+2. Generate jobId (uuid)
+3. Save { status: 'pending', step: 0 } to Redis
+4. Publish { jobId, formData } to QStash
+5. Return { jobId }
+    ↓
+QStash (outside Vercel) calls POST /api/generate-worker
+    ↓
+1. Verify QStash signature
+2. Check idempotency (skip if already done)
+3. Lookup company data (lookupFirmaSafe)
+4. Update Redis { status: 'running', step: 2 }
+5. Generate content (Claude streaming)
+6. Update Redis { status: 'running', step: 3 }
+7. Build docx + upload to Vercel Blob
+8. Update Redis { status: 'completed', downloadUrl, filename }
+    ↓
+Frontend polls GET /api/status/[jobId] every 5s
+    ↓
+Returns { status, step, downloadUrl?, filename?, error? }
+```
 
-### Why Streaming?
-Anthropic requires streaming (`client.messages.stream()`) when `max_tokens` is high enough that the request may exceed 10 minutes. With `max_tokens: 48000`, we must stream and accumulate chunks. Never use `client.messages.create()` with high max_tokens — it will error with "Streaming is required."
+## Environment Variables (Vercel)
 
-## Environment Variables (Vercel — Production + Development)
-| Name | Notes |
-|------|-------|
-| `ANTHROPIC_API_KEY` | From console.anthropic.com |
-| `INNGEST_API_KEY` | `signkey-prod-...` from app.inngest.com → Settings → API Keys |
-| `INNGEST_SIGNING_KEY` | Same as INNGEST_API_KEY |
+| Name | Where to get it |
+|------|----------------|
+| `ANTHROPIC_API_KEY` | console.anthropic.com |
+| `QSTASH_TOKEN` | app.upstash.com → QStash → API Keys |
+| `QSTASH_CURRENT_SIGNING_KEY` | app.upstash.com → QStash → API Keys |
+| `QSTASH_NEXT_SIGNING_KEY` | app.upstash.com → QStash → API Keys (for key rotation) |
+| `UPSTASH_REDIS_REST_URL` | app.upstash.com → Redis → REST API → URL |
+| `UPSTASH_REDIS_REST_TOKEN` | app.upstash.com → Redis → REST API → Token |
 
-All env vars must have **"Skip Deployment Protection"** enabled on Vercel so Inngest can reach `/api/inngest`.
+All env vars must have **"Skip Deployment Protection"** enabled on Vercel.
 
 ## API Routes
 
-### `/api/generate-single` (POST)
-- Fast endpoint (10s timeout)
+### `POST /api/generate-single`
+- maxDuration: 10s
 - Validates form data
-- Calls `inngest.send({ name: 'atestat/generate', data: { formData } })`
-- Returns `{ runId }`
-- Never do heavy work here
+- Creates jobId, saves to Redis, publishes to QStash
+- Returns `{ jobId }`
 
-### `/api/inngest` (GET/POST/PUT)
-- Inngest serve handler
-- Receives webhook calls from Inngest when jobs start/complete
-- DO NOT set `maxDuration` here — Inngest handles its own timeout
+### `POST /api/generate-worker`
+- QStash webhook endpoint (called by QStash, NOT by the browser)
+- Verifies `upstash-signature` header
+- Runs: lookup → generate → build docx → upload to blob → save to Redis
+- Updates Redis step at each phase (1, 2, 3)
+- Idempotent: skips if job already completed/failed
 
-### `/api/run/[id]` (GET)
-- Polls Inngest API (`https://api.inngest.com/v1/runs/${id}`) with `INNGEST_API_KEY`
-- Returns `{ status: 'completed'|'failed'|'running', downloadUrl?, filename?, error? }`
-- Used by frontend to poll for completion
+### `GET /api/status/[id]`
+- Reads job from Redis
+- Returns `{ status: 'pending'|'running'|'completed'|'failed', step?, downloadUrl?, filename?, error? }`
 
 ## Key Source Files
 
 | File | Purpose |
 |------|---------|
-| `lib/claude.ts` | Claude API client — `generateContent()` (streaming, 48k tokens) and `lookupFirmaSafe()` |
-| `lib/docx-builder.ts` | Builds `.docx` from `AtestateContent` JSON using `docx` v9 |
-| `lib/system-prompt.ts` | Full system prompt — document structure, topic engine, accounting rules (OMFP 1802/2014), JSON schema |
-| `lib/inngest/client.ts` | Inngest client instance (`new Inngest({ id: 'atestat-app' })`) |
-| `lib/inngest/generate-atestat.ts` | Inngest function — 3 steps: lookup → generate → build-docx+upload |
-| `app/success/page.tsx` | Loading/done/error UI — polls `/api/run/[id]` every 10s for up to 10 min |
-| `app/genereaza/page.tsx` | Form page |
-| `types/atestat.ts` | All TypeScript interfaces (`SimpleFormData`, `AtestateInput`, `AtestateContent`, etc.) |
+| `lib/redis.ts` | Upstash Redis client — `getJob()`, `setJob()`, `JobState` type |
+| `lib/qstash.ts` | QStash client — `qstash.publish()`, `getWorkerUrl()` |
+| `lib/claude.ts` | `lookupFirmaSafe()` + `generateContent()` (streaming, 48k tokens) |
+| `lib/docx-builder.ts` | Builds `.docx` from `AtestateContent` JSON |
+| `lib/system-prompt.ts` | System prompt + JSON schema |
+| `app/success/page.tsx` | Polls `/api/status/[jobId]` every 5s |
+| `types/atestat.ts` | TypeScript interfaces |
 
 ## Frontend Flow
-1. `/genereaza` → submit form → data saved to `sessionStorage` → redirect to `/success`
-2. `/success` → POST to `/api/generate-single` → get `runId` → poll `/api/run/[id]` every 10s
-3. On `completed` → show download link (Vercel Blob URL)
-4. On `failed` → show error + retry button
-5. On timeout (10 min) → show timeout error with link to app.inngest.com
+1. `/genereaza` → submit → sessionStorage + redirect to `/success`
+2. `/success` → POST `/api/generate-single` → get `jobId` → poll `/api/status/[jobId]` every 5s
+3. On `completed` → show download link
+4. On `failed` → show error + retry
+5. On timeout (10 min) → contact message
 
-## Common Issues & Fixes
+## QStash Setup on Upstash
+1. Go to https://app.upstash.com → QStash → create queue
+2. Copy QSTASH_TOKEN, QSTASH_CURRENT_SIGNING_KEY, QSTASH_NEXT_SIGNING_KEY
+3. Go to Redis → copy REST_URL and REST_TOKEN
+4. Add all to Vercel env vars with "Skip Deployment Protection"
+5. In QStash dashboard → add your deployed URL as destination: `https://atestatapp.vercel.app/api/generate-worker`
 
-### "Streaming is required" error from Anthropic
-Use `client.messages.stream()` with `for await (const event of stream)`. Never `client.messages.create()` with high `max_tokens`.
+## Common Issues
 
-### Download URL empty on done phase
-Check if `@vercel/blob` `put()` succeeded. The blob upload happens in the Inngest function's `build-docx` step. Ensure Vercel Blob is configured in the project.
+### Generation times out or never completes
+1. Check QStash received the message (Upstash QStash dashboard)
+2. Check `/api/generate-worker` is accessible from outside Vercel
+3. Check Redis credentials are correct
+4. Check QSTASH_CURRENT_SIGNING_KEY matches the dashboard
 
-### Inngest not triggering
-1. Check `INNGEST_API_KEY` is in Vercel env vars
-2. Check "Skip Deployment Protection" is enabled on env vars
-3. Check `/api/inngest` is reachable from outside Vercel
-4. Check Inngest dashboard at app.inngest.com
+### Download URL empty
+Check `@vercel/blob` `put()` succeeded and the URL is being saved to Redis in the worker.
 
-### Vercel Timeout (300s)
-This means the Inngest job isn't running and something fell back to the synchronous path. Check Inngest is connected and the job was queued. The heavy work must run in Inngest, NOT in the API route.
+### Worker not being called
+1. Verify QStash has the correct destination URL
+2. Check "Skip Deployment Protection" is on all env vars
+3. Test locally: QStash won't call localhost — use ngrok or deploy first
 
 ## Build & Deploy
 ```bash
 npm run build
-npx vercel --prod
+# Vercel auto-deploys from GitHub push
 ```
-
-## Debugging
-1. Vercel logs → `/api/generate-single` — did it return `runId`?
-2. Inngest dashboard: https://app.inngest.com
-3. `/api/inngest` — did Inngest webhook arrive?

@@ -14,12 +14,12 @@ const STEPS = [
   { label: 'Se construiește fișierul Word', doneLabel: 'Fișierul Word este gata' },
 ]
 
-async function pollStatus(runId: string, onStep: (step: Step) => void, timeout = 600000): Promise<{ downloadUrl: string; filename: string }> {
+async function pollStatus(jobId: string, onStep: (step: Step) => void, timeout = 600000): Promise<{ downloadUrl: string; filename: string }> {
   const deadline = Date.now() + timeout
-  let currentStep: Step = 0
+  let lastSeenStep: Step = 0
   while (Date.now() < deadline) {
     try {
-      const res = await fetch(`/api/run/${runId}`)
+      const res = await fetch(`/api/status/${jobId}`)
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
       const data = await res.json()
       if (data.status === 'completed') {
@@ -27,14 +27,9 @@ async function pollStatus(runId: string, onStep: (step: Step) => void, timeout =
         return { downloadUrl: data.downloadUrl ?? '', filename: data.filename ?? 'atestat.docx' }
       }
       if (data.status === 'failed') throw new Error(data.error || 'Generarea a eșuat.')
-      // Step-based progress: advance step based on elapsed time
-      const elapsed = Date.now() - (deadline - timeout)
-      if (elapsed < 20000) {
-        if (currentStep !== 0) { currentStep = 0; onStep(0) }
-      } else if (elapsed < 300000) {
-        if (currentStep !== 1) { currentStep = 1; onStep(1) }
-      } else {
-        if (currentStep !== 2) { currentStep = 2; onStep(2) }
+      if (typeof data.step === 'number' && data.step !== lastSeenStep) {
+        lastSeenStep = data.step as Step
+        onStep(lastSeenStep)
       }
     } catch (err) {
       if (err instanceof Error && err.message.includes('HTTP')) throw err
@@ -73,9 +68,9 @@ export default function SuccessPage() {
         const err = await res.json().catch(() => ({ error: 'Eroare server' }))
         throw new Error(err.error || `HTTP ${res.status}`)
       }
-      const { runId } = await res.json()
-      runIdRef.current = runId
-      const result = await pollStatus(runId, setCurrentStep)
+      const { jobId } = await res.json()
+      runIdRef.current = jobId
+      const result = await pollStatus(jobId, setCurrentStep)
       setDownloadUrl(result.downloadUrl)
       setFilename(result.filename)
       sessionStorage.removeItem('atestateInput')
