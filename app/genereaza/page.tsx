@@ -188,9 +188,20 @@ export default function GenereazaPage() {
 
       {/* Progress steps */}
       <div className="max-w-3xl mx-auto px-4 pb-8">
-        <div className="flex items-center justify-between">
+        <div className="relative flex items-center justify-between">
+          {/* Background line behind buttons */}
+          <div className="absolute top-5 left-0 right-0 h-px" style={{ background: 'rgba(255,255,255,0.05)' }} />
+          {/* Active portion of line */}
+          <div
+            className="absolute top-5 h-px transition-all duration-300"
+            style={{
+              left: `${(activeSection / (SECTIONS.length - 1)) * 100}%`,
+              right: '0',
+              background: 'rgba(0,255,135,0.3)',
+            }}
+          />
           {SECTIONS.map(({ n, label, id }, i) => (
-            <div key={n} className="flex flex-col items-center gap-1.5">
+            <div key={n} className="flex flex-col items-center gap-1.5 relative z-10">
               <button
                 type="button"
                 onClick={() => {
@@ -202,19 +213,20 @@ export default function GenereazaPage() {
                   background: i === activeSection
                     ? 'var(--green)'
                     : i < activeSection
-                    ? 'rgba(0,255,135,0.2)'
+                    ? 'rgba(0,255,135,0.12)'
                     : 'rgba(255,255,255,0.05)',
-                  color: i <= activeSection ? '#080808' : '#555',
+                  color: i === activeSection ? '#080808' : i < activeSection ? 'var(--green)' : '#555',
                   border: i === activeSection ? 'none' : '1px solid rgba(255,255,255,0.1)',
+                  boxShadow: i === activeSection ? '0 0 16px rgba(0,255,135,0.3)' : 'none',
                 }}
               >
-                {i < activeSection ? '✓' : n}
+                {i < activeSection ? (
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                ) : n}
               </button>
               <span className="text-[10px] hidden sm:block" style={{ color: i === activeSection ? 'var(--green)' : '#555' }}>{label}</span>
             </div>
           ))}
-          {/* Connecting lines */}
-          <div className="flex-1 mx-2 h-px" style={{ background: 'linear-gradient(90deg, rgba(0,255,135,0.3) 0%, rgba(0,255,135,0.3) 100%)' }} />
         </div>
       </div>
 
@@ -276,8 +288,11 @@ export default function GenereazaPage() {
           </div>
 
           <div className="p-4 rounded-xl text-sm space-y-1" style={{ background: 'rgba(0,255,135,0.03)', border: '1px solid rgba(0,255,135,0.12)' }}>
-            <p className="font-semibold text-gray-200">✦ AI-ul caută automat</p>
-            <p className="text-gray-500 text-xs">CIF, adresă, cod CAEN, număr angajați, dată înființare — totul din surse publice.</p>
+            <p className="font-semibold text-gray-200 flex items-center gap-2">
+              <svg className="w-4 h-4 shrink-0" style={{ color: 'var(--green)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+              AI-ul cauta automat
+            </p>
+            <p className="text-gray-500 text-xs">CIF, adresa, cod CAEN, numar angajati, data infiintare — totul din surse publice.</p>
           </div>
 
           <Field label="Denumire firmă" field="firma_nume" placeholder="ex: SC Kaufland Romania SRL" form={form} errors={errors} onChange={set} />
@@ -353,7 +368,7 @@ export default function GenereazaPage() {
             <div>
               <div className="text-white font-bold text-lg mb-1">Gata de generare!</div>
               <p className="text-gray-500 text-sm max-w-sm mx-auto">
-                10 EUR · un singur atestat · fără abonament · banii înapoi dacă documentul nu se generează corect
+                10 EUR · un singur atestat · fara abonament · banii inapoi daca ceva nu functioneaza
               </p>
             </div>
             <button
@@ -361,9 +376,9 @@ export default function GenereazaPage() {
               disabled={submitting}
               className="btn-green w-full sm:w-auto px-12 py-4 text-base font-bold disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {submitting ? 'Se procesează...' : 'Continuă — 10 EUR →'}
+              {submitting ? 'Se proceseaza...' : 'Continua — 10 EUR →'}
             </button>
-            <p className="text-gray-600 text-xs">Plată securizată · Inngest generează documentul în 3–5 minute</p>
+            <p className="text-gray-600 text-xs">Plata securizata · Documentul se genereaza in 3–5 minute</p>
           </div>
         </div>
       </form>

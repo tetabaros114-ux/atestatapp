@@ -6,30 +6,42 @@ import Link from 'next/link'
 import type { SimpleFormData } from '@/types/atestat'
 
 type Phase = 'loading' | 'done' | 'error'
+type Step = 0 | 1 | 2 | 3
 
-async function pollStatus(runId: string, onProgress: (pct: number) => void, timeout = 600000): Promise<{ downloadUrl: string; filename: string }> {
+const STEPS = [
+  { label: 'Se caută datele firmei', doneLabel: 'Datele firmei au fost găsite' },
+  { label: 'AI-ul scrie documentul', doneLabel: 'Documentul a fost scris' },
+  { label: 'Se construiește fișierul Word', doneLabel: 'Fișierul Word este gata' },
+]
+
+async function pollStatus(runId: string, onStep: (step: Step) => void, timeout = 600000): Promise<{ downloadUrl: string; filename: string }> {
   const deadline = Date.now() + timeout
-  let ticks = 0
+  let currentStep: Step = 0
   while (Date.now() < deadline) {
     try {
       const res = await fetch(`/api/run/${runId}`)
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
       const data = await res.json()
       if (data.status === 'completed') {
+        onStep(3)
         return { downloadUrl: data.downloadUrl ?? '', filename: data.filename ?? 'atestat.docx' }
       }
       if (data.status === 'failed') throw new Error(data.error || 'Generarea a eșuat.')
-      // Progress bar: estimate based on elapsed time
+      // Step-based progress: advance step based on elapsed time
       const elapsed = Date.now() - (deadline - timeout)
-      ticks++
-      const pct = Math.min(80, 5 + Math.floor((elapsed / 10000) * 8))
-      onProgress(pct)
+      if (elapsed < 20000) {
+        if (currentStep !== 0) { currentStep = 0; onStep(0) }
+      } else if (elapsed < 300000) {
+        if (currentStep !== 1) { currentStep = 1; onStep(1) }
+      } else {
+        if (currentStep !== 2) { currentStep = 2; onStep(2) }
+      }
     } catch (err) {
       if (err instanceof Error && err.message.includes('HTTP')) throw err
     }
-    await new Promise(r => setTimeout(r, 10000))
+    await new Promise(r => setTimeout(r, 5000))
   }
-  throw new Error('Timpul a expirat. Verifică în app.inngest.com.')
+  throw new Error('Timpul a expirat. Contactează-ne la contact@atestatapp.ro.')
 }
 
 export default function SuccessPage() {
@@ -38,7 +50,7 @@ export default function SuccessPage() {
   const [downloadUrl, setDownloadUrl] = useState('')
   const [filename, setFilename] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
-  const [progress, setProgress] = useState(5)
+  const [currentStep, setCurrentStep] = useState<Step>(0)
   const runIdRef = useRef('')
 
   useEffect(() => {
@@ -63,7 +75,7 @@ export default function SuccessPage() {
       }
       const { runId } = await res.json()
       runIdRef.current = runId
-      const result = await pollStatus(runId, setProgress)
+      const result = await pollStatus(runId, setCurrentStep)
       setDownloadUrl(result.downloadUrl)
       setFilename(result.filename)
       sessionStorage.removeItem('atestateInput')
@@ -81,7 +93,7 @@ export default function SuccessPage() {
         const simple = JSON.parse(raw)
         setPhase('loading')
         setErrorMsg('')
-        setProgress(5)
+        setCurrentStep(0)
         start(simple)
       } catch { router.replace('/genereaza') }
     } else { router.replace('/genereaza') }
@@ -120,35 +132,50 @@ export default function SuccessPage() {
                   <p className="text-gray-500 text-sm">AI-ul scrie documentul. Poate dura 3–5 minute.</p>
                 </div>
 
-                {/* Progress bar — animated, not misleading */}
-                <div className="space-y-2">
-                  <div className="w-full rounded-full h-2 overflow-hidden" style={{ background: 'rgba(255,255,255,0.05)' }}>
-                    <div
-                      className="h-2 rounded-full"
-                      style={{ width: `${progress}%`, background: 'var(--green)' }}
-                    />
-                  </div>
-                  <p className="text-xs text-gray-600 text-center">
-                    {progress < 40 ? 'Se caută datele firmei...' : progress < 75 ? 'AI-ul scrie documentul...' : 'Se construiește fișierul Word...'}
-                  </p>
-                </div>
+                {/* Step-based progress — honest, no fake percentages */}
+                <div>
+                  <p className="text-xs text-gray-600 mb-4 text-center">Pasul {currentStep + 1} din {STEPS.length}</p>
 
-                {/* Step indicators */}
-                <div className="space-y-2 text-left">
-                  {[
-                    { label: 'Se caută datele firmei', done: progress >= 20 },
-                    { label: 'AI-ul scrie documentul', done: progress >= 60 },
-                    { label: 'Se construiește fișierul Word', done: progress >= 85 },
-                  ].map(({ label, done }) => (
-                    <div key={label} className="flex items-center gap-3 text-sm">
-                      <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0
-                        ${done ? '' : 'opacity-30'}`}
-                        style={{ background: done ? 'var(--green)' : 'rgba(255,255,255,0.05)', color: done ? '#080808' : '#555' }}>
-                        {done ? '✓' : '○'}
-                      </div>
-                      <span style={{ color: done ? '#ccc' : '#555' }}>{label}</span>
-                    </div>
-                  ))}
+                  {/* Step indicator rows */}
+                  <div className="space-y-0">
+                    {STEPS.map((step, i) => {
+                      const isDone = i < currentStep
+                      const isActive = i === currentStep
+                      return (
+                        <div key={step.label} className="flex items-start gap-3 text-sm relative">
+                          {/* Circle indicator */}
+                          <div
+                            className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 mt-0 relative z-10"
+                            style={{
+                              background: isDone || isActive ? 'rgba(0,255,135,0.12)' : 'rgba(255,255,255,0.04)',
+                              border: isDone ? '1.5px solid rgba(0,255,135,0.5)' : isActive ? '1.5px solid rgba(0,255,135,0.3)' : '1.5px solid rgba(255,255,255,0.08)',
+                            }}
+                          >
+                            {isDone ? (
+                              <svg className="w-3.5 h-3.5" style={{ color: 'var(--green)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                            ) : isActive ? (
+                              <svg className="w-3.5 h-3.5 animate-spin" style={{ color: 'var(--green)' }} fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="3" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
+                            ) : (
+                              <span className="w-1.5 h-1.5 rounded-full block" style={{ background: 'rgba(255,255,255,0.2)' }} />
+                            )}
+                          </div>
+                          {/* Connecting line (not on last) */}
+                          {i < STEPS.length - 1 && (
+                            <div
+                              className="absolute left-[13px] top-7 w-0.5 z-0"
+                              style={{
+                                height: 'calc(100% + 12px)',
+                                background: i < currentStep ? 'rgba(0,255,135,0.25)' : 'rgba(255,255,255,0.05)',
+                              }}
+                            />
+                          )}
+                          <span className="pt-1" style={{ color: isDone ? '#aaa' : isActive ? '#fff' : '#555', fontWeight: isActive ? 500 : 400 }}>
+                            {isDone ? step.doneLabel : step.label}
+                          </span>
+                        </div>
+                      )
+                    })}
+                  </div>
                 </div>
 
                 <p className="text-gray-700 text-xs">
@@ -198,6 +225,7 @@ export default function SuccessPage() {
                     Pagina principală
                   </Link>
                 </div>
+                <p className="text-xs text-gray-600">Fișierul va fi disponibil pentru descărcare 7 zile.</p>
               </div>
             </div>
           )}
@@ -225,7 +253,7 @@ export default function SuccessPage() {
                 </div>
 
                 <p className="text-gray-700 text-xs">
-                  Contactează-ne la contact@atestatapp.ro dacă problema persistă.
+                  Contactează-ne la <a href="mailto:contact@atestatapp.ro" className="underline hover:text-gray-400 transition-colors">contact@atestatapp.ro</a> dacă problema persistă.
                 </p>
               </div>
             </div>

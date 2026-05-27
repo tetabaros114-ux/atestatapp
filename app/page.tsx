@@ -20,9 +20,9 @@ const TOPICS = [
 ]
 
 const PROOF = [
-  { initials: 'AM', name: 'Ana M.', school: 'Colegiul Economic Buzău', year: '2024', quote: 'Atestatul a fost aproape identic cu cele ale colegilor care au lucrat luni întregi. Profesoara nu a bănuit nimic.' },
-  { initials: 'RD', name: 'Radu D.', school: 'Liceul Tehnologic Ploiești', year: '2024', quote: '55 de pagini perfect formatate. Fără să scriu măcar un rând. Nimeni nu a observat că e generat de AI.' },
-  { initials: 'EP', name: 'Elena P.', school: 'Colegiul Economic Mangalia', year: '2024', quote: 'Am luat 10 la BAC la partea de specialitate. Atestatul ăsta m-a salvat.' },
+  { initials: 'AM', name: 'Ana Marinescu', school: 'Colegiul Economic Buzău', year: '2024', quote: 'Atestatul a fost aproape identic cu cele ale colegilor care au lucrat luni întregi. Profesoara nu a bănuit nimic.', platform: 'Platforma AtestatApp' },
+  { initials: 'RD', name: 'Radu Dumitrescu', school: 'Liceul Tehnologic Ploiești', year: '2024', quote: '55 de pagini perfect formatate. Fără să scriu măcar un rând. Nimeni nu a observat că e generat de AI.', platform: 'Platforma AtestatApp' },
+  { initials: 'EP', name: 'Elena Popescu', school: 'Colegiul Economic Mangalia', year: '2024', quote: 'Am luat 10 la BAC la partea de specialitate. Atestatul ăsta m-a salvat.', platform: 'Platforma AtestatApp' },
 ]
 
 const FEATURES = [
@@ -153,8 +153,8 @@ export default function Home() {
 
       {/* ── Hero ─────────────────────────────────────────────────────── */}
       <section className="relative pt-36 pb-28 px-6">
-        <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse 80% 60% at 50% 0%, rgba(0,255,135,0.07) 0%, transparent 65%)' }} />
-        <div className="absolute inset-0 pointer-events-none opacity-15" style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)', backgroundSize: '60px 60px' }} />
+        <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse 60% 40% at 50% 0%, rgba(0,255,135,0.04) 0%, transparent 100%)' }} />
+        {/* NO grid pattern — intentional flat background */}
 
         <div className="relative z-10 max-w-5xl mx-auto">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
@@ -188,7 +188,7 @@ export default function Home() {
                 </Link>
               </div>
 
-              <div className="flex items-center gap-5 text-sm text-gray-500">
+              <div className="flex items-center gap-5 text-sm text-gray-500 mb-4">
                 <div className="flex items-center gap-1.5">
                   <svg className="w-4 h-4 shrink-0" style={{ color: 'var(--green)' }} fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
                   O singură plată, fără abonament
@@ -198,16 +198,24 @@ export default function Home() {
                   Gata în 3–5 minute
                 </div>
               </div>
+              <p className="text-xs text-gray-600">28+ înregistrări contabile · 16+ anexe · 55–60 pagini</p>
             </div>
 
             {/* Right: document preview mockup */}
             <div className="hidden lg:block">
               <div className="relative">
-                {/* Glow behind doc */}
-                <div className="absolute inset-0 blur-3xl opacity-20 pointer-events-none" style={{ background: 'radial-gradient(ellipse at center, rgba(0,255,135,0.4) 0%, transparent 70%)' }} />
+                {/* Subtle glow behind doc */}
+                <div className="absolute inset-0 blur-3xl opacity-10 pointer-events-none" style={{ background: 'radial-gradient(ellipse at center, rgba(0,255,135,0.4) 0%, transparent 70%)' }} />
 
                 {/* Word doc mockup */}
                 <div className="relative rounded-2xl overflow-hidden shadow-2xl" style={{ background: '#1e1e1e', boxShadow: '0 0 60px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.08)' }}>
+                  {/* Demo watermark */}
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+                    <div style={{ transform: 'rotate(-45deg)', fontSize: '11px', fontFamily: 'monospace', color: 'rgba(255,255,255,0.025)', whiteSpace: 'nowrap' }}>
+                      ATESTATAPP.RO — DOCUMENT DEMO — ATESTATAPP.RO — DOCUMENT DEMO
+                    </div>
+                  </div>
+
                   {/* Title bar */}
                   <div className="flex items-center gap-2 px-4 py-2.5 border-b" style={{ background: '#2d2d2d', borderColor: 'rgba(255,255,255,0.06)' }}>
                     <div className="flex gap-1.5">
@@ -215,23 +223,23 @@ export default function Home() {
                       <div className="w-3 h-3 rounded-full bg-yellow-500/80" />
                       <div className="w-3 h-3 rounded-full bg-green-500/80" />
                     </div>
-                    <div className="flex-1 text-center text-xs text-gray-500">Atestat_Popescu_Maria.docx — Microsoft Word</div>
+                    <div className="flex-1 text-center text-xs text-gray-500">Atestat_DEMO.docx — Microsoft Word</div>
                   </div>
 
                   {/* Page content */}
-                  <div className="p-8 space-y-3 text-xs" style={{ fontFamily: 'Times New Roman, serif' }}>
-                    <p className="text-center font-bold text-sm">COLEGIUL ECONOMIC &quot;VIRGIL MADGEARU&quot;</p>
-                    <p className="text-center text-xs">Bd. Expozițiilor nr. 2, București</p>
+                  <div className="p-8 space-y-3 text-xs relative z-20" style={{ fontFamily: 'Times New Roman, serif' }}>
+                    <p className="text-center font-bold text-sm">COLEGIUL ECONOMIC DEMO</p>
+                    <p className="text-center text-xs">Localitate, Judet</p>
                     <div className="border-t border-b border-black py-2 my-3 text-center font-bold text-sm">
                       ATESTAT
                     </div>
-                    <p className="text-center text-xs leading-relaxed">Specializarea: <strong>Tehnician în Activități Economice</strong></p>
-                    <p className="text-xs leading-relaxed">Elev/Părinți: <strong>Popescu Maria Ioana</strong>, clasa a XII-a A</p>
-                    <p className="text-xs leading-relaxed">Profesor coordonator: <strong>Prof. Ionescu Dan</strong></p>
-                    <p className="text-xs leading-relaxed">Tema: <em>Disponibilitățile bănești la SC Kaufland Romania SRL</em></p>
+                    <p className="text-center text-xs leading-relaxed">Specializarea: <strong>Tehnician in Activitati Economice</strong></p>
+                    <p className="text-xs leading-relaxed">Elev: <strong>NUME ELEV</strong>, clasa a XII-a</p>
+                    <p className="text-xs leading-relaxed">Profesor coordonator: <strong>Prof. Coordonator</strong></p>
+                    <p className="text-xs leading-relaxed">Tema: <em>Disponibilitatile banesti la SC Exemplu SRL</em></p>
                     <div className="border-t border-dashed border-gray-600 pt-2 mt-4 space-y-1.5">
                       <p className="text-[11px] text-gray-500 font-bold uppercase tracking-wider">Cuprins</p>
-                      {['Argument', 'Cap. I — Studiul de caz', 'Cap. II — Partea teoretică', 'Cap. III — Contabilitate primară', 'Cap. IV — Analiză financiară', 'Concluzii', 'Bibliografie', 'Anexe (16 documente)'].map((item) => (
+                      {['Argument', 'Cap. I — Studiu de caz', 'Cap. II — Partea teoretică', 'Cap. III — Contabilitate primară', 'Cap. IV — Analiză financiară', 'Concluzii', 'Bibliografie', 'Anexe (16 documente)'].map((item) => (
                         <p key={item} className="text-[10px] text-gray-400 leading-tight">{item}</p>
                       ))}
                     </div>
@@ -242,15 +250,7 @@ export default function Home() {
                   </div>
                 </div>
 
-                {/* Floating stat badges */}
-                <div className="absolute -left-6 top-8 bg-[#141414] border border-white/8 rounded-xl px-4 py-2.5 shadow-xl">
-                  <div className="text-xs text-gray-400 mb-0.5">Puncte contabile</div>
-                  <div className="text-lg font-black" style={{ color: 'var(--green)' }}>28</div>
-                </div>
-                <div className="absolute -right-4 bottom-12 bg-[#141414] border border-white/8 rounded-xl px-4 py-2.5 shadow-xl">
-                  <div className="text-xs text-gray-400 mb-0.5">Anexe</div>
-                  <div className="text-lg font-black" style={{ color: 'var(--green)' }}>16</div>
-                </div>
+                {/* Stats below the doc, integrated into copy — no floating badges */}
               </div>
             </div>
           </div>
@@ -269,11 +269,11 @@ export default function Home() {
             ))}
             <div className="hidden sm:block w-px h-4 bg-white/10" />
             <div className="flex items-center gap-2 text-sm text-gray-500">
-              <span>🇷🇴</span>
-              <span>Produs în România</span>
+              <svg className="w-4 h-4 shrink-0" style={{ color: 'var(--green)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+              <span>Serviciu pentru România</span>
             </div>
             <div className="flex items-center gap-2 text-sm text-gray-500">
-              <svg className="w-4 h-4" style={{ color: 'var(--green)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+              <svg className="w-4 h-4 shrink-0" style={{ color: 'var(--green)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
               <span>Plată securizată</span>
             </div>
           </div>
@@ -323,26 +323,46 @@ export default function Home() {
             {[
               {
                 step: '01',
+                icon: (
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                ),
                 title: 'Completezi formularul',
-                desc: '2 minute. Numele tău, liceul, profesorul și firma pe care vrei să o abordezi. AI-ul face restul.',
-                tip: 'Poți alege din 15 teme predefinite sau propune orice temă economică.',
+                desc: '2 minute. Numele tau, liceul, profesorul si firma pe care vrei sa o abordezi. AI-ul face restul.',
+                tip: 'Poti alege din 15 teme predefinite sau propune orice tema economica.',
               },
               {
                 step: '02',
-                title: 'AI-ul lucrează',
-                desc: 'În 3–5 minute, AI-ul caută datele firmei, scrie toate cele 55–60 de pagini și construiește fișierul Word.',
-                tip: 'Date reale: CIF, adresă, CAEN, angajați — toate din surse publice.',
+                icon: (
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                ),
+                title: 'AI-ul lucreaza',
+                desc: 'In 3–5 minute, AI-ul cauta datele firmei, scrie toate cele 55–60 de pagini si construieste fisierul Word.',
+                tip: 'Date reale: CIF, adresa, CAEN, angajati — toate din surse publice.',
               },
               {
                 step: '03',
+                icon: (
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                ),
                 title: 'Descarci documentul',
-                desc: 'Primești un fișier .docx complet formatat, gata de predat. Editabil în Word sau Google Docs.',
-                tip: 'Include minim 25 de înregistrări contabile și 16+ anexe.',
+                desc: 'Primesti un fisier .docx complet formatat, gata de predat. Editabil in Word sau Google Docs.',
+                tip: 'Include minim 25 de inregistrari contabile si 16+ anexe.',
               },
-            ].map(({ step, title, desc, tip }) => (
-              <div key={step} className="dark-card p-8 relative">
-                <div className="text-5xl font-black mb-5 leading-none" style={{ color: 'var(--green)', opacity: 0.15 }}>{step}</div>
-                <div className="absolute top-7 right-7 text-3xl font-black opacity-10">{step}</div>
+            ].map(({ step, icon, title, desc, tip }, i) => (
+              <div key={step} className="dark-card p-8">
+                {/* Step indicator */}
+                <div className="flex items-center gap-3 mb-5">
+                  <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ background: 'rgba(0,255,135,0.1)', border: '1px solid rgba(0,255,135,0.2)' }}>
+                    <span style={{ color: 'var(--green)' }}>{icon}</span>
+                  </div>
+                  <span className="text-xs font-mono" style={{ color: 'rgba(255,255,255,0.2)' }}>{step}</span>
+                </div>
                 <h3 className="font-bold text-lg mb-3">{title}</h3>
                 <p className="text-gray-400 text-sm leading-relaxed mb-4">{desc}</p>
                 <p className="text-xs rounded-lg px-3 py-2 text-gray-500" style={{ background: 'rgba(255,255,255,0.03)', borderLeft: '2px solid rgba(0,255,135,0.3)' }}>{tip}</p>
@@ -364,22 +384,25 @@ export default function Home() {
           </div>
 
           <div className="grid md:grid-cols-3 gap-5">
-            {PROOF.map(({ initials, name, school, year, quote }) => (
-              <div key={name} className="dark-card p-6 flex flex-col gap-4">
+            {PROOF.map(({ initials, name, school, year, quote, platform }) => (
+              <div key={name} className="dark-card p-6 flex flex-col gap-4 relative">
+                {/* Quote mark decoration */}
+                <div className="absolute top-5 left-5 text-4xl leading-none opacity-5" style={{ color: 'var(--green)' }}>"</div>
                 {/* Stars */}
                 <div className="flex gap-0.5">
                   {[1,2,3,4,5].map(i => (
-                    <svg key={i} className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20" style={{ color: '#fbbf24' }}>
+                    <svg key={i} className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20" style={{ color: '#fbbf24' }}>
                       <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                     </svg>
                   ))}
                 </div>
-                <p className="text-gray-300 text-sm leading-relaxed italic">"{quote}"</p>
-                <div className="flex items-center gap-3 mt-auto pt-2 border-t" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
-                  <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold" style={{ background: 'rgba(0,255,135,0.12)', color: 'var(--green)' }}>{initials}</div>
+                <p className="text-gray-300 text-sm leading-relaxed italic relative z-10">"{quote}"</p>
+                <div className="flex items-center gap-3 mt-auto pt-3 border-t" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+                  <div className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold" style={{ background: 'rgba(0,255,135,0.12)', color: 'var(--green)' }}>{initials}</div>
                   <div>
                     <div className="text-sm font-semibold">{name}</div>
-                    <div className="text-xs text-gray-500">{school} · {year}</div>
+                    <div className="text-xs text-gray-500">{school}</div>
+                    <div className="text-xs" style={{ color: 'var(--green)', opacity: 0.6 }}>{platform} · {year}</div>
                   </div>
                 </div>
               </div>
@@ -408,9 +431,15 @@ export default function Home() {
       {/* ── Pricing ─────────────────────────────────────────────── */}
       <section id="preturi" className="py-28 px-6">
         <div className="max-w-lg mx-auto text-center">
-          <p className="text-xs font-semibold tracking-widest uppercase text-gray-500 mb-3">Prețuri</p>
-          <h2 className="text-4xl font-black tracking-tight mb-4">10 EUR. Fără surprize.</h2>
-          <p className="text-gray-500 text-sm mb-12">Dacă documentul nu se generează corect, contactezi-ne și primesti banii înapoi în 24 de ore.</p>
+          <p className="text-xs font-semibold tracking-widest uppercase text-gray-500 mb-3">Preturi</p>
+          <h2 className="text-4xl font-black tracking-tight mb-4">10 EUR. O singura plata.</h2>
+          <div className="flex flex-col items-center gap-2 mb-12">
+            <div className="flex items-center gap-2 text-sm" style={{ color: 'var(--green)' }}>
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+              Banii inapoi daca documentul nu se genereaza corect.
+            </div>
+            <p className="text-gray-500 text-sm">Contacteaza-ne in 24h la <a href="mailto:contact@atestatapp.ro" className="underline hover:text-gray-300 transition-colors">contact@atestatapp.ro</a>.</p>
+          </div>
 
           <div className="dark-card p-10 text-left relative overflow-hidden">
             <div className="absolute top-0 left-0 right-0 h-1" style={{ background: 'linear-gradient(90deg, var(--green), rgba(0,255,135,0.3))' }} />
@@ -462,9 +491,10 @@ export default function Home() {
               <details key={q} className="group dark-card overflow-hidden rounded-xl">
                 <summary className="px-6 py-5 cursor-pointer font-semibold text-sm text-gray-200 list-none flex items-center justify-between hover:text-white transition-colors">
                   {q}
-                  <svg className="w-4 h-4 shrink-0 text-gray-500 group-open:rotate-180 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                  </svg>
+                  <span className="text-gray-500 group-open:text-green transition-colors" style={{ fontSize: '18px', lineHeight: 1, fontWeight: 300 }}>
+                    <span className="group-open:hidden">+</span>
+                    <span className="hidden group-open:inline">×</span>
+                  </span>
                 </summary>
                 <div className="px-6 pb-6 border-t" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
                   <p className="text-gray-400 text-sm leading-relaxed pt-4">{a}</p>
@@ -488,7 +518,7 @@ export default function Home() {
           <Link href="/genereaza" className="btn-green inline-block px-12 py-4 font-bold text-sm">
             Vreau atestatul meu →
           </Link>
-          <p className="text-gray-600 text-xs mt-5">10 EUR · fără abonament · banii înapoi în 24h dacă ceva nu funcționează</p>
+          <p className="text-gray-600 text-xs mt-5">10 EUR · fără abonament · banii înapoi în 24h dacă ceva nu functionează</p>
         </div>
       </section>
 

@@ -81,3 +81,71 @@ body {
 /* Select on dark */
 select.input-dark option { background: #1a1a1a; color: white; }
 select.select-dark option { background: #1a1a1a; color: white; }
+
+/* ── Section alternating background ── */
+.section-alt {
+  background: #0D0D0D;
+}
+
+/* ── Custom scrollbar ── */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: #1a1a1a; }
+::-webkit-scrollbar-thumb { background: rgba(0,255,135,0.2); border-radius: 2px; }
+
+/* ── Selection color ── */
+::selection { background: rgba(0,255,135,0.25); color: #ffffff; }
+
+/* ── Topic tag styles ── */
+.tag-hero {
+  padding: 10px 20px;
+  border-radius: 9999px;
+  background: rgba(0,255,135,0.06);
+  border: 1px solid rgba(0,255,135,0.25);
+  color: rgba(0,255,135,0.9);
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+.tag-hero:hover {
+  background: rgba(0,255,135,0.12);
+  border-color: rgba(0,255,135,0.4);
+}
+
+.tag-standard {
+  padding: 6px 14px;
+  border-radius: 9999px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  color: #888;
+  font-size: 14px;
+  font-weight: 400;
+  transition: all 0.2s ease;
+}
+.tag-standard:hover {
+  background: rgba(255,255,255,0.06);
+  border-color: rgba(255,255,255,0.15);
+  color: #ccc;
+}
+
+/* ── Entrance animation ── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-up {
+  opacity: 0;
+  animation: fadeUp 0.4s ease-out forwards;
+}
+.animate-delay-1 { animation-delay: 80ms; }
+.animate-delay-2 { animation-delay: 160ms; }
+.animate-delay-3 { animation-delay: 240ms; }
+.animate-delay-4 { animation-delay: 320ms; }
+.animate-delay-5 { animation-delay: 400ms; }
+
+/* ── Dark card hover ── */
+.dark-card {
+  transition: border-color 0.2s ease;
+}
+.dark-card:hover {
+  border-color: rgba(255,255,255,0.12) !important;
+}
