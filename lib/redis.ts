@@ -4,10 +4,10 @@ let _redis: Redis | null = null
 
 function getRedis(): Redis {
   if (!_redis) {
-    _redis = new Redis({
-      url: process.env.UPSTASH_REDIS_REST_URL!,
-      token: process.env.UPSTASH_REDIS_REST_TOKEN!,
-    })
+    const url = process.env.UPSTASH_REDIS_REST_URL ?? ''
+    const token = process.env.UPSTASH_REDIS_REST_TOKEN ?? ''
+    console.log('[redis] URL present:', !!url, '| Token present:', !!token)
+    _redis = new Redis({ url, token })
   }
   return _redis
 }
@@ -34,7 +34,14 @@ export async function getJob(id: string): Promise<JobState | null> {
 
 export async function setJob(id: string, state: JobState, ttlSeconds = 3600): Promise<void> {
   const redis = getRedis()
-  await redis.set(id, JSON.stringify(state), { ex: ttlSeconds })
+  console.log('[redis] setJob called:', id, JSON.stringify(state))
+  try {
+    await redis.set(id, JSON.stringify(state), { ex: ttlSeconds })
+    console.log('[redis] setJob OK:', id)
+  } catch (err) {
+    console.error('[redis] setJob FAILED:', id, err instanceof Error ? err.message : String(err))
+    throw err
+  }
 }
 
 export async function updateJobStep(
