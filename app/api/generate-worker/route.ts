@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-export const maxDuration = 600
+export const maxDuration = 900
 import { Receiver } from '@upstash/qstash'
 import { getJob, setJob } from '@/lib/redis'
 import { lookupFirmaSafe, generateContent } from '@/lib/claude'
