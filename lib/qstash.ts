@@ -20,7 +20,7 @@ export async function publishJob(jobId: string, formData: unknown): Promise<stri
     url: WORKER_URL,
     body: { jobId, formData },
     retries: 2,
-    timeout: 600,
+    timeout: 780,
   })
   return typeof result === 'object' && result !== null && 'messageId' in result
     ? String(result.messageId)
