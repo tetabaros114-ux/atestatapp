@@ -909,18 +909,20 @@ export default function Home() {
               </p>
             </div>
 
-            <motion.div
-              variants={scaleIn}
-              className="max-w-md mx-auto card p-8 md:p-10 text-[var(--ink)] relative overflow-hidden glow-sm"
-            >
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                <span className="inline-flex items-center gap-1.5 bg-[var(--accent)] text-[#04140D] text-xs font-semibold px-3 py-1.5 rounded-full shadow-lg">
+            <div className="relative max-w-md mx-auto pt-3">
+              <div className="absolute left-1/2 -translate-x-1/2 top-0 z-10">
+                <span className="inline-flex items-center gap-1.5 bg-[var(--accent)] text-[#04140D] text-xs font-semibold px-3 py-1.5 rounded-full shadow-lg shadow-[var(--accent-glow)]">
                   <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
                   </svg>
                   Cel mai popular
                 </span>
               </div>
+
+              <motion.div
+                variants={scaleIn}
+                className="card p-8 md:p-10 text-[var(--ink)] relative overflow-hidden glow-sm"
+              >
 
               <div className="flex items-baseline gap-1.5 mb-1">
                 <span className="text-6xl font-bold tracking-tight">10</span>
@@ -1008,7 +1010,8 @@ export default function Home() {
                   Fără risc
                 </span>
               </div>
-            </motion.div>
+              </motion.div>
+            </div>
 
             <p className="text-center text-xs text-[var(--ink-soft)] mt-6">
               Nu ești mulțumit? Scrie-ne la{" "}
