@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { motion, AnimatePresence, type Variants } from 'framer-motion'
+import { FloatingNav } from '@/components/floating-nav'
 import type { SimpleFormData } from '@/types/atestat'
 
 type Phase = 'loading' | 'done' | 'error'
@@ -112,25 +113,23 @@ export default function SuccessPage() {
 
   return (
     <div className="flex-1 relative z-10">
-      {/* Nav */}
-      <header className="sticky top-0 z-50 bg-[var(--bg)]/70 backdrop-blur-xl border-b border-[var(--border-soft)]">
-        <div className="container flex items-center justify-between h-16">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-[var(--accent)] flex items-center justify-center glow-sm">
-              <span className="text-[#04140D] font-bold text-sm">A</span>
-            </div>
-            <span className="font-semibold tracking-tight">
-              Atestat<span className="serif italic">App</span>
-              <span className="text-[var(--ink-soft)]">.ro</span>
-            </span>
-          </Link>
-          <span className="eyebrow-emerald">
-            Plată confirmată · ID #{runIdRef.current?.slice(0, 8) || '...'}
+      {/* Floating nav */}
+      <FloatingNav>
+        <Link href="/" className="flex items-center gap-2 shrink-0">
+          <div className="w-7 h-7 rounded-lg bg-[var(--accent)] flex items-center justify-center glow-sm">
+            <span className="text-[#04140D] font-bold text-xs">A</span>
+          </div>
+          <span className="font-semibold text-sm text-[var(--ink)] tracking-tight">
+            Atestat<span className="serif italic">App</span>
+            <span className="text-[var(--ink-soft)]">.ro</span>
           </span>
-        </div>
-      </header>
+        </Link>
+        <span className="eyebrow-emerald">
+          Plată confirmată · ID #{runIdRef.current?.slice(0, 8) || '...'}
+        </span>
+      </FloatingNav>
 
-      <div className="container max-w-2xl py-10 md:py-16">
+      <div className="container max-w-2xl pt-24 md:pt-28 pb-10 md:pb-16">
         <AnimatePresence mode="wait">
           {phase === 'loading' && (
             <motion.div

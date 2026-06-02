@@ -4,6 +4,7 @@ import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { motion, AnimatePresence, type Variants } from 'framer-motion'
+import { FloatingNav } from '@/components/floating-nav'
 import type { SimpleFormData } from '@/types/atestat'
 
 const sectionVariants: Variants = {
@@ -172,33 +173,27 @@ export default function GenereazaPage() {
 
   return (
     <div className="flex-1">
-      {/* Nav */}
-      <header className="sticky top-0 z-50 bg-[var(--bg)]/85 backdrop-blur-xl border-b border-[var(--border-soft)]">
-        <div className="container flex items-center justify-between h-16">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-[var(--ink)] flex items-center justify-center">
-              <span className="text-[var(--bg)] font-bold text-sm">A</span>
-            </div>
-            <span className="font-semibold tracking-tight">
-              Atestat<span className="serif italic">App</span>
-              <span className="text-[var(--ink-soft)]">.ro</span>
-            </span>
-          </Link>
-          <div className="hidden sm:flex items-center gap-4 text-sm">
-            <span className="badge badge-accent">
-              <span className="dot bg-[var(--accent)]" />
-              Plătești doar 10 EUR
-            </span>
-            <span className="text-[var(--ink-soft)] hidden md:inline">· 2 minute de completat</span>
+      {/* Floating nav */}
+      <FloatingNav>
+        <Link href="/" className="flex items-center gap-2 shrink-0">
+          <div className="w-7 h-7 rounded-lg bg-[var(--accent)] flex items-center justify-center glow-sm">
+            <span className="text-[#04140D] font-bold text-xs">A</span>
           </div>
-          <div className="sm:hidden">
-            <span className="badge badge-accent">10 EUR</span>
-          </div>
-        </div>
-      </header>
+          <span className="font-semibold text-sm text-[var(--ink)] tracking-tight">
+            Atestat<span className="serif italic">App</span>
+            <span className="text-[var(--ink-soft)]">.ro</span>
+          </span>
+        </Link>
+        <span className="hidden sm:inline-flex items-center gap-1.5 text-xs text-[var(--ink-muted)]">
+          <span className="dot bg-[var(--accent)]" />
+          Plătești doar 10 EUR
+          <span className="text-[var(--ink-faint)] mx-1">·</span>
+          <span className="hidden md:inline">2 minute de completat</span>
+        </span>
+      </FloatingNav>
 
       {/* Header */}
-      <section className="pt-10 md:pt-16 pb-6 md:pb-10">
+      <section className="pt-24 md:pt-28 pb-6 md:pb-10">
         <div className="container max-w-3xl text-center">
           <span className="badge mb-4">
             <span className="dot bg-[var(--accent)]" />

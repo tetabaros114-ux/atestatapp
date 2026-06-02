@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { motion, useInView, type Variants } from "framer-motion";
 import { useRef } from "react";
+import { FloatingNav } from "@/components/floating-nav";
 
 const TOPICS = [
   "Disponibilitățile bănești",
@@ -477,53 +478,49 @@ function Stars({ count = 5 }: { count?: number }) {
 export default function Home() {
   return (
     <main className="flex-1 relative z-10">
-      {/* ── HEADER ────────────────────────────────────────────────────── */}
-      <header className="sticky top-0 z-50 bg-[var(--bg)]/70 backdrop-blur-xl border-b border-[var(--border-soft)]">
-        <div className="container flex items-center justify-between h-16">
-          <Link href="/" className="flex items-center gap-2 group">
-            <div className="w-8 h-8 rounded-lg bg-[var(--accent)] flex items-center justify-center glow-sm">
-              <span className="text-[#04140D] font-bold text-sm">A</span>
-            </div>
-            <span className="font-semibold text-[var(--ink)] tracking-tight">
-              Atestat<span className="serif italic">App</span>
-              <span className="text-[var(--ink-muted)]">.ro</span>
-            </span>
-          </Link>
-          <nav className="hidden md:flex items-center gap-7 text-sm text-[var(--ink-muted)]">
-            <a href="#cum-functioneaza" className="hover:text-[var(--ink)] transition-colors">
-              Cum funcționează
-            </a>
-            <a href="#ce-primesti" className="hover:text-[var(--ink)] transition-colors">
-              Ce primești
-            </a>
-            <a href="#teme" className="hover:text-[var(--ink)] transition-colors">
-              Teme
-            </a>
-            <a href="#preturi" className="hover:text-[var(--ink)] transition-colors">
-              Preț
-            </a>
-          </nav>
-          <div className="flex items-center gap-3">
-            <Link href="/genereaza" className="btn-primary text-sm py-2 px-4">
-              Începe acum
-              <svg
-                className="w-3.5 h-3.5"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
-              </svg>
-            </Link>
+      {/* ── FLOATING NAV (magic pill) ────────────────────────────────── */}
+      <FloatingNav>
+        <Link href="/" className="flex items-center gap-2 shrink-0">
+          <div className="w-7 h-7 rounded-lg bg-[var(--accent)] flex items-center justify-center glow-sm">
+            <span className="text-[#04140D] font-bold text-xs">A</span>
           </div>
-        </div>
-      </header>
+          <span className="font-semibold text-sm text-[var(--ink)] tracking-tight">
+            Atestat<span className="serif italic">App</span>
+            <span className="text-[var(--ink-soft)]">.ro</span>
+          </span>
+        </Link>
+        <nav className="hidden md:flex items-center gap-5 text-sm text-[var(--ink-muted)]">
+          <a href="#cum-functioneaza" className="hover:text-[var(--ink)] transition-colors">
+            Cum funcționează
+          </a>
+          <a href="#ce-primesti" className="hover:text-[var(--ink)] transition-colors">
+            Ce primești
+          </a>
+          <a href="#teme" className="hover:text-[var(--ink)] transition-colors">
+            Teme
+          </a>
+          <a href="#preturi" className="hover:text-[var(--ink)] transition-colors">
+            Preț
+          </a>
+        </nav>
+        <Link href="/genereaza" className="btn-primary text-xs py-1.5 px-3 shrink-0 ml-auto md:ml-0">
+          Începe acum
+          <svg
+            className="w-3 h-3"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+          </svg>
+        </Link>
+      </FloatingNav>
 
       {/* ── HERO ──────────────────────────────────────────────────────── */}
-      <section className="relative pt-12 md:pt-20 pb-16 md:pb-24 overflow-hidden">
+      <section className="relative pt-24 md:pt-32 pb-16 md:pb-24 overflow-hidden">
         {/* Background grid + radial glow */}
         <div className="absolute inset-0 -z-10 grid-bg" aria-hidden />
         <div
