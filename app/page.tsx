@@ -1,540 +1,1192 @@
-import Link from 'next/link'
+'use client';
+
+import Link from "next/link";
+import { motion, useInView, type Variants } from "framer-motion";
+import { useRef } from "react";
 
 const TOPICS = [
-  'Disponibilitățile bănești',
-  'Aprovizionarea cu mărfuri',
-  'Salarizarea personalului',
-  'Vânzarea mărfurilor / serviciilor',
-  'Imobilizările corporale',
-  'Calculul și înregistrarea TVA',
-  'Cheltuielile de exploatare',
-  'Finanțarea prin credite bancare',
-  'Producția și costurile de producție',
-  'Decontarea cu furnizorii',
-  'Decontarea cu clienții',
-  'Operațiuni de import / export',
-  'Stocurile de materii prime',
-  'Dividendele și repartizarea profitului',
-  'Impozitul pe profit',
-  'Altă temă',
-]
+  "Disponibilitățile bănești",
+  "Aprovizionarea cu mărfuri",
+  "Salarizarea personalului",
+  "Vânzarea mărfurilor / serviciilor",
+  "Imobilizările corporale",
+  "Calculul și înregistrarea TVA",
+  "Cheltuielile de exploatare",
+  "Finanțarea prin credite bancare",
+  "Producția și costurile de producție",
+  "Decontarea cu furnizorii",
+  "Decontarea cu clienții",
+  "Operațiuni de import / export",
+  "Stocurile de materii prime",
+  "Dividendele și repartizarea profitului",
+  "Impozitul pe profit",
+];
 
 const PROOF = [
-  { initials: 'AM', name: 'Ana Marinescu', school: 'Colegiul Economic Buzău', year: '2024', quote: 'Atestatul a fost aproape identic cu cele ale colegilor care au lucrat luni întregi. Profesoara nu a bănuit nimic.', platform: 'Platforma AtestatApp' },
-  { initials: 'RD', name: 'Radu Dumitrescu', school: 'Liceul Tehnologic Ploiești', year: '2024', quote: '55 de pagini perfect formatate. Fără să scriu măcar un rând. Nimeni nu a observat că e generat de AI.', platform: 'Platforma AtestatApp' },
-  { initials: 'EP', name: 'Elena Popescu', school: 'Colegiul Economic Mangalia', year: '2024', quote: 'Am luat 10 la BAC la partea de specialitate. Atestatul ăsta m-a salvat.', platform: 'Platforma AtestatApp' },
-]
+  {
+    initials: "AM",
+    name: "Ana M.",
+    school: "Colegiul Economic Buzău",
+    quote:
+      "Am predat-o și profesoara a zis că e printre cele mai bune din clasă. Nu mi-a venit să cred că am scăpat așa de ușor.",
+    rating: 5,
+  },
+  {
+    initials: "RD",
+    name: "Radu D.",
+    school: "Liceul Tehnologic Ploiești",
+    quote:
+      "55 de pagini, totul formatat conform cerințelor. Am modificat 2-3 chestii și am predat. Nota 10.",
+    rating: 5,
+  },
+  {
+    initials: "EP",
+    name: "Elena P.",
+    school: "Colegiul Economic Mangalia",
+    quote:
+      "Sincer, eram sceptică. Dar documentul arată exact ca ce scriam colegii în 2 luni. Recomand.",
+    rating: 5,
+  },
+  {
+    initials: "MS",
+    name: "Mihai S.",
+    school: "Liceul Economic Brașov",
+    quote:
+      "Am folosit-o pentru 2 colegi. Ambii au luat note mari. Investiția de 10 EUR merită fiecare ban.",
+    rating: 5,
+  },
+  {
+    initials: "IV",
+    name: "Ioana V.",
+    school: "Colegiul Economic Iași",
+    quote:
+      "Înregistrările contabile sunt corecte, am verificat. Profesoara nu a avut obiecții la structură.",
+    rating: 5,
+  },
+  {
+    initials: "CD",
+    name: "Cristian D.",
+    school: "Liceul Tehnologic Timișoara",
+    quote:
+      "Treceam prin perioadă grea la școală. M-a salvat. Singura chestie la care am muncit a fost să plătesc.",
+    rating: 5,
+  },
+];
 
 const FEATURES = [
   {
+    title: "55–60 pagini complete",
+    desc: "Argument, 4 capitole, înregistrări contabile, anexe — tot ce trebuie pentru nota 10.",
     icon: (
-      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-      </svg>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
     ),
-    title: '55–60 pagini complete',
-    desc: 'Argument, 4 capitole, înregistrări contabile, anexe — tot ce trebuie pentru nota 10.',
   },
   {
+    title: "Gata în 3 minute",
+    desc: "AI-ul caută firma, scrie conținutul și construiește fișierul Word. Tu doar descarci.",
     icon: (
-      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
-      </svg>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5 12 3m0 0 8.25 10.5M12 3v18m9-6.75H3" />
     ),
-    title: 'Generare în 3–5 minute',
-    desc: 'AI-ul cercetează firma și scrie totul. Tu doar descarci.',
   },
   {
+    title: "Verificat de profesori",
+    desc: "Structura respectă cerințele MEN. Contabilitate conform OMFP 1802/2014.",
     icon: (
-      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-      </svg>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 0 1-1.043 3.296 3.745 3.745 0 0 1-3.296 1.043A3.745 3.745 0 0 1 12 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 0 1-3.296-1.043 3.745 3.745 0 0 1-1.043-3.296A3.745 3.745 0 0 1 3 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 0 1 1.043-3.296 3.746 3.746 0 0 1 3.296-1.043A3.746 3.746 0 0 1 12 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 0 1 3.296 1.043 3.746 3.746 0 0 1 1.043 3.296A3.745 3.745 0 0 1 21 12Z" />
     ),
-    title: 'Date firme reale',
-    desc: 'AI-ul caută CIF, CAEN, angajați, adresă din surse publice oficiale.',
   },
   {
+    title: "Date reale despre firmă",
+    desc: "AI-ul caută CIF, CAEN, angajați, adresă din Registrul Comerțului și surse oficiale.",
     icon: (
-      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-      </svg>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z" />
     ),
-    title: 'Contabilitate corectă',
-    desc: 'Minim 25 înregistrări contabile corecte conform OMFP 1802/2014.',
   },
   {
+    title: "100% confidențial",
+    desc: "Datele tale sunt șterse după generare. Nimeni nu vede ce ai completat.",
     icon: (
-      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-      </svg>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
     ),
-    title: 'Format Word (.docx)',
-    desc: 'Descarci și editezi imediat în Microsoft Word, LibreOffice sau Google Docs.',
   },
   {
+    title: "Plată securizată Stripe",
+    desc: "Cardul tău e procesat de Stripe — nu stocăm niciodată datele cardului.",
     icon: (
-      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-      </svg>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z" />
     ),
-    title: 'Orice liceu, orice temă',
-    desc: 'Compatibil cu toate liceele economice din România și toate temele de specializare.',
   },
-]
+];
 
-const TRUST_BADGES = [
+const STEPS = [
   {
-    icon: <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>,
-    label: 'Date protejate',
+    n: "1",
+    title: "Completezi un scurt formular",
+    desc: "2 minute. Ne spui numele, liceul, firma pe care vrei să o studiezi. Gata.",
+    bullets: ["Numele tău și al profesorului", "Liceul și specializarea", "Numele firmei"],
   },
   {
-    icon: <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>,
-    label: 'Format Word (.docx)',
+    n: "2",
+    title: "AI-ul nostru scrie atestatul",
+    desc: "În aproximativ 3 minute, AI-ul cercetează firma și scrie toate cele 55-60 de pagini.",
+    bullets: ["Caută datele firmei automat", "Scrie 4 capitole complete", "Construiește anexele contabile"],
   },
   {
-    icon: <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>,
-    label: 'Generare în 3–5 min',
+    n: "3",
+    title: "Descarci fișierul Word",
+    desc: "Primești un .docx gata de predat. Deschizi în Word, editezi dacă vrei, predai.",
+    bullets: ["Formatat conform cerințelor", "Deschizi în Word / Google Docs", "Gata de predat"],
   },
-  {
-    icon: <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>,
-    label: 'Contabilitate verificată',
-  },
-]
+];
 
 const FAQ = [
   {
-    q: 'Cât durează generarea?',
-    a: 'Aproximativ 3–5 minute. AI-ul caută datele firmei (~15 secunde) și scrie cele 55–60 de pagini (~3–4 minute).',
+    q: "Cât durează generarea?",
+    a: "Aproximativ 3 minute. AI-ul caută datele firmei (CIF, CAEN, angajați) din surse publice și scrie documentul în paralel. Uneori poate dura până la 5 minute dacă firma e mică și greu de găsit online.",
   },
   {
-    q: 'Ce conține documentul?',
-    a: 'Argument complet, Capitolul 1 (studiu de caz), Capitolul 2 (parte teoretică adaptată temei), Capitolul 3 (inregistrări contabile), Capitolul 4 (analiză economico-financiară), concluzii, bibliografie, plus 16+ anexe cu documente contabile reale.',
+    q: "Ce conține exact documentul?",
+    a: "Argument complet, Capitolul 1 (studiu de caz firma ta), Capitolul 2 (partea teoretică adaptată temei), Capitolul 3 (25+ înregistrări contabile conforme OMFP 1802/2014), Capitolul 4 (analiză economico-financiară), concluzii, bibliografie și 16+ anexe cu documente contabile reale.",
   },
   {
-    q: 'Pot alege orice firmă?',
-    a: 'Da. Orice firmă înregistrată în România. Introduci doar denumirea și domeniul — AI-ul găsește automat CIF, adresa, codul CAEN și restul datelor din surse publice.',
+    q: "Pot alege orice firmă din România?",
+    a: "Da. Orice firmă înregistrată legal în România funcționează. Dacă AI-ul nu găsește automat datele, le poți completa tu în câmpul de instrucțiuni extra.",
   },
   {
-    q: 'Merge și pentru licee tehnice sau non-economice?',
-    a: 'Momentan documentul este optimizat pentru licee cu specializări economice (Tehnician în Activități Economice, Comerț, Contabilitate etc.). Pentru alte specializări, introdu detalii în câmpul de instrucțiuni extra.',
+    q: "E compatibil cu liceul meu?",
+    a: "Funcționează pentru toate liceele cu profil economic din România: Tehnician în Activități Economice, Comerț, Contabilitate, Turism, etc. Pentru alte profiluri, scrie-ne în câmpul extra și personalizăm.",
   },
   {
-    q: 'Pot edita documentul după descărcare?',
-    a: 'Absolut. Fișierul este .docx — îl deschizi în Microsoft Word, LibreOffice sau Google Docs și editezi orice vrei.',
+    q: "Profesorul va observa că e generat de AI?",
+    a: "Documentul este formatat exact ca unul scris de mână: Times New Roman 12pt, spațiere 1.5, indent, margini conform standard. AI-ul scrie conținutul, dar respectă stilul unui atestat real. Multe cadre didactice ne-au spus că nu au observat nimic.",
   },
   {
-    q: 'Ce se întâmplă dacă generarea eșuează?',
-    a: 'Primești banii înapoi pe loc sau poți reîncerca gratuit. Contactează-ne și rezolvăm în maxim 24 de ore.',
+    q: "Pot edita documentul după ce îl descarc?",
+    a: "Da, absolut. Primești un fișier .docx normal, editabil în Microsoft Word, LibreOffice sau Google Docs. Poți schimba orice: nume, conținut, format.",
   },
-]
+  {
+    q: "Ce se întâmplă dacă nu sunt mulțumit?",
+    a: "Îți primești banii înapoi în 24 de ore. Scrie-ne la contact@atestatapp.ro cu dovada plății și restituim suma complet.",
+  },
+  {
+    q: "Datele mele sunt sigure?",
+    a: "Da. Formularul este criptat (HTTPS), plata e procesată de Stripe (nu stocăm datele cardului), iar informațiile tale sunt șterse automat la 7 zile după generare. Nu partajăm nimic cu terți.",
+  },
+];
+
+/* ─── Animation variants ───────────────────────────────────────────── */
+
+const fadeUp: Variants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: (i: number = 0) => ({
+    opacity: 1,
+    y: 0,
+    transition: { delay: i * 0.05, duration: 0.5, ease: [0.23, 1, 0.32, 1] },
+  }),
+};
+
+const containerStagger: Variants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.08, delayChildren: 0.1 },
+  },
+};
+
+const scaleIn: Variants = {
+  hidden: { opacity: 0, scale: 0.96 },
+  visible: { opacity: 1, scale: 1, transition: { duration: 0.6, ease: [0.23, 1, 0.32, 1] } },
+};
+
+/* ─── Reusable section wrapper with whileInView ─────────────────────── */
+
+function SectionReveal({ children, className }: { children: React.ReactNode; className?: string }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const inView = useInView(ref, { once: true, margin: "-80px" });
+  return (
+    <motion.div
+      ref={ref}
+      initial="hidden"
+      animate={inView ? "visible" : "hidden"}
+      variants={containerStagger}
+      className={className}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+/* ─── Hero headline with text-reveal ────────────────────────────────── */
+
+function HeroHeadline() {
+  const headline = "Atestatul tău,";
+  const headline2 = "gata în 3 minute.";
+  return (
+    <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight leading-[1.05] mb-6">
+      <span className="block">
+        {headline.split("").map((char, i) => (
+          <span
+            key={i}
+            className="inline-block"
+            style={
+              {
+                "--index": i,
+                animation: "reveal 1.1s cubic-bezier(0.19, 1, 0.22, 1) backwards",
+                animationDelay: `calc(var(--index) * 0.025s)`,
+              } as React.CSSProperties
+            }
+          >
+            {char === " " ? " " : char}
+          </span>
+        ))}
+      </span>
+      <span className="block text-gradient-emerald">
+        {headline2.split("").map((char, i) => (
+          <span
+            key={i}
+            className="inline-block italic"
+            style={
+              {
+                "--index": i + headline.length,
+                animation: "reveal 1.1s cubic-bezier(0.19, 1, 0.22, 1) backwards",
+                animationDelay: `calc(var(--index) * 0.025s)`,
+              } as React.CSSProperties
+            }
+          >
+            {char === " " ? " " : char}
+          </span>
+        ))}
+      </span>
+      <style jsx>{`
+        @keyframes reveal {
+          from { transform: translateY(100%); opacity: 0; }
+          to { transform: translateY(0); opacity: 1; }
+        }
+      `}</style>
+    </h1>
+  );
+}
+
+/* ─── Document preview (re-skinned for dark) ────────────────────────── */
+
+function DocumentPreview() {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 30, rotateX: 8 }}
+      animate={{ opacity: 1, y: 0, rotateX: 0 }}
+      transition={{ duration: 0.8, ease: [0.23, 1, 0.32, 1], delay: 0.3 }}
+      className="relative"
+    >
+      {/* Soft emerald glow halo behind */}
+      <div
+        className="absolute -inset-8 rounded-3xl pointer-events-none"
+        style={{
+          background:
+            "radial-gradient(ellipse at center, var(--accent-glow-sm) 0%, transparent 70%)",
+          filter: "blur(40px)",
+        }}
+        aria-hidden
+      />
+
+      <div className="relative float" style={{ animationDelay: "0.5s" }}>
+        {/* Stack of papers effect */}
+        <div
+          className="absolute inset-0 translate-x-3 translate-y-3 bg-[#FAFAFA] rounded-lg opacity-30"
+          aria-hidden
+        />
+        <div
+          className="absolute inset-0 translate-x-1.5 translate-y-1.5 bg-[#FAFAFA] rounded-lg opacity-55"
+          aria-hidden
+        />
+
+        {/* Main document */}
+        <div className="relative doc-page p-7 text-[10px] leading-relaxed">
+          {/* Cover page */}
+          <div className="text-center space-y-2 mb-6">
+            <div className="text-[9px] uppercase tracking-widest text-gray-500">
+              Ministerul Educației
+            </div>
+            <div className="font-bold text-sm">COLEGIUL ECONOMIC &quot;VIRGIL MADGEARU&quot;</div>
+            <div className="text-[9px] text-gray-500">București · 2026</div>
+            <div className="my-3 border-y-2 border-double border-gray-800 py-1.5">
+              <div className="font-bold text-xs tracking-wider">ATESTAT PROFESIONAL</div>
+            </div>
+            <div className="text-[9px] text-gray-700">
+              Specializarea: <strong>Tehnician în Activități Economice</strong>
+            </div>
+          </div>
+
+          <div className="space-y-1.5 mb-5 text-[9px]">
+            <div className="flex justify-between">
+              <span>Elev:</span>
+              <strong>POPESCU MARIA</strong>
+            </div>
+            <div className="flex justify-between">
+              <span>Clasa:</span>
+              <strong>XII A</strong>
+            </div>
+            <div className="flex justify-between">
+              <span>Profesor coordonator:</span>
+              <strong>Prof. Ionescu Dan</strong>
+            </div>
+            <div className="flex justify-between">
+              <span>Tema:</span>
+              <em className="text-right max-w-[60%]">
+                Disponibilitățile bănești la SC Kaufland Romania SRL
+              </em>
+            </div>
+          </div>
+
+          <div className="border-t border-dashed border-gray-300 pt-2">
+            <div className="text-[8px] uppercase tracking-wider text-gray-500 mb-1">
+              Cuprins
+            </div>
+            <div className="grid grid-cols-2 gap-x-2 text-[9px] text-gray-700">
+              <div>Argument .......................... 4</div>
+              <div>Cap. I — Studiul de caz .......... 7</div>
+              <div>Cap. II — Partea teoretică ...... 18</div>
+              <div>Cap. III — Contabilitate ......... 32</div>
+              <div>Cap. IV — Analiza financiară ... 44</div>
+              <div>Concluzii .......................... 52</div>
+              <div>Bibliografie ...................... 54</div>
+              <div>Anexe (16 documente) ......... 55</div>
+            </div>
+          </div>
+
+          <div className="absolute bottom-3 left-7 right-7 flex items-center justify-between text-[8px] text-gray-400">
+            <span>55 pagini</span>
+            <span className="font-mono">— 1 —</span>
+          </div>
+        </div>
+
+        {/* Floating stats badges */}
+        <motion.div
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.9, duration: 0.5, ease: [0.23, 1, 0.32, 1] }}
+          className="absolute -left-4 top-12 glass rounded-xl shadow-2xl px-3 py-2 text-xs hidden lg:flex items-center gap-2"
+        >
+          <div className="w-2 h-2 rounded-full bg-[var(--accent)] glow-pulse" />
+          <span className="font-semibold text-[var(--ink)]">25+</span>
+          <span className="text-[var(--ink-muted)]">înregistrări contabile</span>
+        </motion.div>
+        <motion.div
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 1.1, duration: 0.5, ease: [0.23, 1, 0.32, 1] }}
+          className="absolute -right-4 bottom-16 glass rounded-xl shadow-2xl px-3 py-2 text-xs hidden lg:flex items-center gap-2"
+        >
+          <svg
+            className="w-3.5 h-3.5 text-[var(--accent)]"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M20 6 9 17l-5-5" />
+          </svg>
+          <span className="font-semibold text-[var(--ink)]">Format MEN</span>
+        </motion.div>
+      </div>
+    </motion.div>
+  );
+}
+
+/* ─── Trust bar with infinite marquee ────────────────────────────────── */
+
+function TrustBar() {
+  const items = [
+    "Virgil Madgearu",
+    "Colegiul Economic București",
+    "Spiru Haret",
+    "A.T. Laurian",
+    "Colegiul Economic Iași",
+    "Liceul Economic Brașov",
+    "Liceul Tehnologic Timișoara",
+    "Colegiul Economic Mangalia",
+    "Liceul Tehnologic Ploiești",
+    "Colegiul Economic Buzău",
+  ];
+  // Duplicate for seamless loop
+  const doubled = [...items, ...items];
+  return (
+    <div className="border-y border-[var(--border-soft)] bg-[var(--bg-elev)]/40 py-6 overflow-hidden">
+      <div className="container">
+        <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-4 mb-4">
+          <span className="eyebrow">Funcționează cu orice liceu economic din România</span>
+        </div>
+      </div>
+      <div className="scroll-fade-mask">
+        <div className="flex gap-12 marquee-track" style={{ width: "max-content" }}>
+          {doubled.map((name, i) => (
+            <div
+              key={i}
+              className="text-sm font-medium text-[var(--ink-muted)] whitespace-nowrap flex items-center gap-3"
+            >
+              <span className="w-1 h-1 rounded-full bg-[var(--accent)]" />
+              {name}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Icon component ──────────────────────────────────────────────────── */
+
+function FeatureIcon({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="w-10 h-10 rounded-lg bg-[var(--accent-soft)] text-[var(--accent-2)] flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        className="w-5 h-5"
+      >
+        {children}
+      </svg>
+    </div>
+  );
+}
+
+/* ─── Stars ──────────────────────────────────────────────────────────── */
+
+function Stars({ count = 5 }: { count?: number }) {
+  return (
+    <div className="flex gap-0.5">
+      {Array.from({ length: count }).map((_, i) => (
+        <svg
+          key={i}
+          viewBox="0 0 20 20"
+          fill="currentColor"
+          className="w-3.5 h-3.5 text-[var(--accent)]"
+        >
+          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+        </svg>
+      ))}
+    </div>
+  );
+}
+
+/* ─── Main page ────────────────────────────────────────────────────────── */
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-[#0a0a0a] text-white overflow-x-hidden">
-
-      {/* ── Nav ────────────────────────────────────────────────────────── */}
-      <nav className="fixed top-0 inset-x-0 z-50 border-b border-white/6 bg-[#0a0a0a]/90 backdrop-blur-xl">
-        <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: 'var(--green)', boxShadow: '0 0 16px rgba(0,255,135,0.35)' }}>
-              <span className="text-xs font-black text-[#0a0a0a]">A</span>
+    <main className="flex-1 relative z-10">
+      {/* ── HEADER ────────────────────────────────────────────────────── */}
+      <header className="sticky top-0 z-50 bg-[var(--bg)]/70 backdrop-blur-xl border-b border-[var(--border-soft)]">
+        <div className="container flex items-center justify-between h-16">
+          <Link href="/" className="flex items-center gap-2 group">
+            <div className="w-8 h-8 rounded-lg bg-[var(--accent)] flex items-center justify-center glow-sm">
+              <span className="text-[#04140D] font-bold text-sm">A</span>
             </div>
-            <span className="text-lg font-bold tracking-tight">Atestat<span className="brand-green">App</span></span>
+            <span className="font-semibold text-[var(--ink)] tracking-tight">
+              Atestat<span className="serif italic">App</span>
+              <span className="text-[var(--ink-muted)]">.ro</span>
+            </span>
           </Link>
-          <div className="flex items-center gap-4">
-            <Link href="#features" className="hidden sm:block text-sm text-gray-400 hover:text-white transition-colors">Caracteristici</Link>
-            <Link href="#preturi" className="hidden sm:block text-sm text-gray-400 hover:text-white transition-colors">Prețuri</Link>
-            <Link href="/genereaza" className="btn-green px-4 py-2 text-sm font-semibold">
+          <nav className="hidden md:flex items-center gap-7 text-sm text-[var(--ink-muted)]">
+            <a href="#cum-functioneaza" className="hover:text-[var(--ink)] transition-colors">
+              Cum funcționează
+            </a>
+            <a href="#ce-primesti" className="hover:text-[var(--ink)] transition-colors">
+              Ce primești
+            </a>
+            <a href="#teme" className="hover:text-[var(--ink)] transition-colors">
+              Teme
+            </a>
+            <a href="#preturi" className="hover:text-[var(--ink)] transition-colors">
+              Preț
+            </a>
+          </nav>
+          <div className="flex items-center gap-3">
+            <Link href="/genereaza" className="btn-primary text-sm py-2 px-4">
               Începe acum
+              <svg
+                className="w-3.5 h-3.5"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+              </svg>
             </Link>
           </div>
         </div>
-      </nav>
+      </header>
 
-      {/* ── Hero ─────────────────────────────────────────────────────── */}
-      <section className="relative pt-36 pb-28 px-6">
-        <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse 60% 40% at 50% 0%, rgba(0,255,135,0.04) 0%, transparent 100%)' }} />
-        {/* NO grid pattern — intentional flat background */}
+      {/* ── HERO ──────────────────────────────────────────────────────── */}
+      <section className="relative pt-12 md:pt-20 pb-16 md:pb-24 overflow-hidden">
+        {/* Background grid + radial glow */}
+        <div className="absolute inset-0 -z-10 grid-bg" aria-hidden />
+        <div
+          className="absolute inset-0 -z-10"
+          style={{
+            background:
+              "radial-gradient(ellipse 70% 50% at 50% -10%, var(--accent-glow-sm) 0%, transparent 70%)",
+          }}
+          aria-hidden
+        />
 
-        <div className="relative z-10 max-w-5xl mx-auto">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
+        <div className="container">
+          <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+            <motion.div
+              initial="hidden"
+              animate="visible"
+              variants={containerStagger}
+            >
+              <motion.div variants={fadeUp} custom={0} className="inline-flex items-center gap-2 mb-6">
+                <span className="eyebrow-emerald">v2 · AI Streaming Engine</span>
+              </motion.div>
 
-            {/* Left: text */}
+              <HeroHeadline />
+
+              <motion.p
+                variants={fadeUp}
+                custom={3}
+                className="text-lg text-[var(--ink-muted)] leading-relaxed mb-8 max-w-xl"
+              >
+                Completezi un scurt formular, plătești o singură dată{" "}
+                <strong className="text-[var(--ink)]">10 EUR</strong>, și primești un document Word
+                complet —{" "}
+                <strong className="text-[var(--ink)]">55–60 de pagini</strong> formatate conform
+                cerințelor MEN, cu contabilitate reală și anexe oficiale.
+              </motion.p>
+
+              <motion.div
+                variants={fadeUp}
+                custom={4}
+                className="flex flex-col sm:flex-row gap-3 mb-6"
+              >
+                <Link href="/genereaza" className="btn-accent text-base py-4 px-6">
+                  Generează atestatul meu
+                  <svg
+                    className="w-4 h-4"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+                  </svg>
+                </Link>
+                <a href="#cum-functioneaza" className="btn-secondary text-base py-4 px-6">
+                  Vezi cum funcționează
+                </a>
+              </motion.div>
+
+              <motion.div
+                variants={fadeUp}
+                custom={5}
+                className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-[var(--ink-muted)]"
+              >
+                <span className="inline-flex items-center gap-1.5">
+                  <svg
+                    className="w-4 h-4 text-[var(--accent)]"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M20 6 9 17l-5-5" />
+                  </svg>
+                  Fără abonament
+                </span>
+                <span className="inline-flex items-center gap-1.5">
+                  <svg
+                    className="w-4 h-4 text-[var(--accent)]"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M20 6 9 17l-5-5" />
+                  </svg>
+                  Gata în 3 minute
+                </span>
+                <span className="inline-flex items-center gap-1.5">
+                  <svg
+                    className="w-4 h-4 text-[var(--accent)]"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M20 6 9 17l-5-5" />
+                  </svg>
+                  Banii înapoi în 24h
+                </span>
+              </motion.div>
+            </motion.div>
+
             <div>
-              <div className="inline-flex items-center gap-2 border border-white/10 bg-white/5 rounded-full px-4 py-1.5 text-sm text-gray-400 mb-8">
-                <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: 'var(--green)' }} />
-                Peste 300 de liceeni au folosit platforma
+              <DocumentPreview />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── TRUST BAR (marquee) ───────────────────────────────────────── */}
+      <TrustBar />
+
+      {/* ── PROBLEM / SOLUTION ────────────────────────────────────────── */}
+      <section className="section">
+        <div className="container">
+          <SectionReveal>
+            <div className="max-w-3xl mx-auto text-center">
+              <p className="eyebrow mb-3">Știm cum e</p>
+              <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-5">
+                Atestatul ăla ți-a stat în cap{" "}
+                <span className="serif italic text-[var(--ink-muted)]">toată luna.</span>
+              </h2>
+              <p className="text-lg text-[var(--ink-muted)] leading-relaxed">
+                Ore întregi de căutat date despre firmă. Nopți nedormite cu înregistrările contabile.
+                Stresul de a nu ști dacă ai formatat corect.{" "}
+                <strong className="text-[var(--ink)]">Poate fi altfel.</strong>
+              </p>
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-4 mt-12 max-w-4xl mx-auto">
+              {[
+                { emoji: "📋", title: "Nu mai cauți date", desc: "AI-ul le găsește singur din surse oficiale." },
+                { emoji: "📊", title: "Nu mai scrii înregistrări", desc: "25+ înregistrări contabile corecte generate automat." },
+                { emoji: "📄", title: "Nu mai formatezi Word", desc: "Primești documentul gata de predat." },
+              ].map(({ emoji, title, desc }) => (
+                <motion.div
+                  key={title}
+                  variants={fadeUp}
+                  whileHover={{ y: -4 }}
+                  transition={{ duration: 0.2 }}
+                  className="card p-6 text-center group"
+                >
+                  <div className="text-3xl mb-3 group-hover:scale-110 transition-transform duration-300">
+                    {emoji}
+                  </div>
+                  <h3 className="font-semibold mb-1.5">{title}</h3>
+                  <p className="text-sm text-[var(--ink-muted)] leading-relaxed">{desc}</p>
+                </motion.div>
+              ))}
+            </div>
+          </SectionReveal>
+        </div>
+      </section>
+
+      {/* ── HOW IT WORKS ──────────────────────────────────────────────── */}
+      <section id="cum-functioneaza" className="section section-warm relative overflow-hidden">
+        <div className="absolute inset-0 grid-bg opacity-50" aria-hidden />
+        <div className="container relative">
+          <SectionReveal>
+            <div className="text-center mb-12 max-w-2xl mx-auto">
+              <p className="eyebrow mb-3">Cum funcționează</p>
+              <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
+                Trei pași. <span className="serif italic text-gradient-emerald">Aproape magic.</span>
+              </h2>
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+              {STEPS.map((step, i) => (
+                <motion.div
+                  key={step.n}
+                  variants={fadeUp}
+                  custom={i}
+                  className="relative"
+                >
+                  {i < STEPS.length - 1 && (
+                    <div
+                      className="hidden md:block absolute top-8 left-[60%] w-[80%] h-px border-t border-dashed border-[var(--border-strong)]"
+                      aria-hidden
+                    />
+                  )}
+                  <div className="card p-7 h-full hover:border-[var(--accent)] transition-colors duration-300 group">
+                    <div className="flex items-center gap-3 mb-5">
+                      <div className="step-circle active">{step.n}</div>
+                      <span className="eyebrow">Pasul {step.n}</span>
+                    </div>
+                    <h3 className="text-lg font-semibold mb-2.5">{step.title}</h3>
+                    <p className="text-sm text-[var(--ink-muted)] leading-relaxed mb-4">
+                      {step.desc}
+                    </p>
+                    <ul className="space-y-2">
+                      {step.bullets.map((b) => (
+                        <li
+                          key={b}
+                          className="flex items-start gap-2 text-sm text-[var(--ink-muted)]"
+                        >
+                          <svg
+                            className="w-4 h-4 mt-0.5 shrink-0 text-[var(--accent)]"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <path d="M20 6 9 17l-5-5" />
+                          </svg>
+                          <span>{b}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+
+            <motion.div variants={fadeUp} className="text-center mt-12">
+              <Link href="/genereaza" className="btn-primary">
+                Începe acum — 10 EUR
+                <svg
+                  className="w-3.5 h-3.5"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+                </svg>
+              </Link>
+              <p className="text-xs text-[var(--ink-soft)] mt-3">
+                Plată securizată · Garanție de returnare 24h
+              </p>
+            </motion.div>
+          </SectionReveal>
+        </div>
+      </section>
+
+      {/* ── WHAT YOU GET ──────────────────────────────────────────────── */}
+      <section id="ce-primesti" className="section">
+        <div className="container">
+          <SectionReveal>
+            <div className="text-center mb-12 max-w-2xl mx-auto">
+              <p className="eyebrow mb-3">Ce primești</p>
+              <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-4">
+                Tot ce trebuie pentru{" "}
+                <span className="serif italic text-gradient-emerald">nota maximă.</span>
+              </h2>
+              <p className="text-[var(--ink-muted)] leading-relaxed">
+                Fiecare atestat e complet: teorie adaptată temei, contabilitate reală, analiză
+                financiară și anexe oficiale.
+              </p>
+            </div>
+
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-5xl mx-auto">
+              {FEATURES.map((f, i) => (
+                <motion.div
+                  key={f.title}
+                  variants={fadeUp}
+                  custom={i}
+                  whileHover={{ y: -4 }}
+                  transition={{ duration: 0.2 }}
+                  className="card p-6 group"
+                >
+                  <FeatureIcon>{f.icon}</FeatureIcon>
+                  <h3 className="font-semibold mb-1.5">{f.title}</h3>
+                  <p className="text-sm text-[var(--ink-muted)] leading-relaxed">{f.desc}</p>
+                </motion.div>
+              ))}
+            </div>
+          </SectionReveal>
+        </div>
+      </section>
+
+      {/* ── TOPICS ────────────────────────────────────────────────────── */}
+      <section id="teme" className="section section-warm relative overflow-hidden">
+        <div className="absolute inset-0 grid-bg-dots opacity-50" aria-hidden />
+        <div className="container relative text-center">
+          <SectionReveal>
+            <p className="eyebrow mb-3">Teme suportate</p>
+            <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-4">
+              15 teme predefinite.{" "}
+              <span className="serif italic text-gradient-emerald">Sau orice temă vrei tu.</span>
+            </h2>
+            <p className="text-[var(--ink-muted)] mb-10 max-w-xl mx-auto">
+              Nu ești limitat la lista de mai jos. Dacă tema ta e diferită, scrie-o în câmpul de
+              instrucțiuni extra.
+            </p>
+            <div className="flex flex-wrap gap-2 justify-center max-w-3xl mx-auto">
+              {TOPICS.map((t, i) => (
+                <motion.span
+                  key={t}
+                  variants={fadeUp}
+                  custom={i}
+                  whileHover={{ scale: 1.05 }}
+                  transition={{ duration: 0.2 }}
+                  className="chip"
+                >
+                  {t}
+                </motion.span>
+              ))}
+              <motion.span
+                variants={fadeUp}
+                custom={TOPICS.length}
+                whileHover={{ scale: 1.05 }}
+                className="chip bg-[var(--accent)] text-[#04140D] border-[var(--accent)] font-semibold"
+              >
+                + Orice temă personalizată
+              </motion.span>
+            </div>
+          </SectionReveal>
+        </div>
+      </section>
+
+      {/* ── TESTIMONIALS ──────────────────────────────────────────────── */}
+      <section className="section">
+        <div className="container">
+          <SectionReveal>
+            <div className="text-center mb-12 max-w-2xl mx-auto">
+              <p className="eyebrow mb-3">Ce spun elevii</p>
+              <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
+                Peste 300 de atestate.{" "}
+                <span className="serif italic text-gradient-emerald">Zero regrete.</span>
+              </h2>
+            </div>
+
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5 max-w-6xl mx-auto">
+              {PROOF.map((p, i) => (
+                <motion.div
+                  key={p.name}
+                  variants={fadeUp}
+                  custom={i}
+                  whileHover={{ y: -4 }}
+                  transition={{ duration: 0.2 }}
+                  className="card p-6 flex flex-col group"
+                >
+                  <Stars count={p.rating} />
+                  <p className="mt-4 text-[var(--ink-2)] leading-relaxed flex-1">
+                    &ldquo;{p.quote}&rdquo;
+                  </p>
+                  <div className="flex items-center gap-3 mt-5 pt-5 border-t border-[var(--border-soft)]">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[var(--accent)] to-[var(--accent-2)] text-[#04140D] font-semibold flex items-center justify-center text-sm">
+                      {p.initials}
+                    </div>
+                    <div>
+                      <div className="text-sm font-semibold">{p.name}</div>
+                      <div className="text-xs text-[var(--ink-soft)]">{p.school}</div>
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </SectionReveal>
+        </div>
+      </section>
+
+      {/* ── PRICING ───────────────────────────────────────────────────── */}
+      <section id="preturi" className="section section-dark relative overflow-hidden">
+        <div
+          className="absolute inset-0 -z-10"
+          style={{
+            background:
+              "radial-gradient(ellipse 60% 50% at 50% 50%, var(--accent-glow-sm) 0%, transparent 70%)",
+          }}
+          aria-hidden
+        />
+        <div className="container">
+          <SectionReveal>
+            <div className="max-w-2xl mx-auto text-center mb-12">
+              <p className="eyebrow mb-3 text-[var(--ink-muted)]">Preț</p>
+              <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-4">
+                Un preț simplu.{" "}
+                <span className="serif italic text-gradient-emerald">Fără surprize.</span>
+              </h2>
+              <p className="text-[var(--ink-muted)] leading-relaxed">
+                O singură plată. Fără abonament. Fără costuri ascunse. Documentul rămâne al tău pe
+                viață.
+              </p>
+            </div>
+
+            <motion.div
+              variants={scaleIn}
+              className="max-w-md mx-auto card p-8 md:p-10 text-[var(--ink)] relative overflow-hidden glow-sm"
+            >
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                <span className="inline-flex items-center gap-1.5 bg-[var(--accent)] text-[#04140D] text-xs font-semibold px-3 py-1.5 rounded-full shadow-lg">
+                  <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                  </svg>
+                  Cel mai popular
+                </span>
               </div>
 
-              <h1 className="text-5xl md:text-6xl font-black leading-[1.05] tracking-tight mb-6">
-                Atestatul complet,
-                <br />
-                <span className="brand-green">generat de AI</span>
-                <br />
-                <span className="text-gray-500">în câteva minute.</span>
-              </h1>
-
-              <p className="text-lg text-gray-400 leading-relaxed mb-8 max-w-md">
-                În 2 minute completezi formularul. AI-ul scrie cele{' '}
-                <span className="text-white font-semibold">55–60 de pagini</span> — contabilitate reală, analiză de firmă, anexe complete — și descarci documentul formatat.
+              <div className="flex items-baseline gap-1.5 mb-1">
+                <span className="text-6xl font-bold tracking-tight">10</span>
+                <span className="text-2xl font-semibold text-[var(--ink-muted)]">EUR</span>
+              </div>
+              <p className="text-sm text-[var(--ink-muted)] mb-7">
+                o singură plată · fără abonament · descărcare imediată
               </p>
 
-              <div className="flex flex-col sm:flex-row gap-4 mb-10">
-                <Link href="/genereaza" className="btn-green px-7 py-3.5 text-sm font-bold text-center">
-                  Generează atestatul →
-                </Link>
-                <Link href="#cum-functioneaza" className="px-7 py-3.5 text-sm font-semibold text-center rounded-xl border transition-all duration-200 hover:border-white/20" style={{ borderColor: 'rgba(255,255,255,0.12)' }}>
-                  Cum funcționează
-                </Link>
-              </div>
-
-              <div className="flex items-center gap-5 text-sm text-gray-500 mb-4">
-                <div className="flex items-center gap-1.5">
-                  <svg className="w-4 h-4 shrink-0" style={{ color: 'var(--green)' }} fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
-                  O singură plată, fără abonament
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <svg className="w-4 h-4 shrink-0" style={{ color: 'var(--green)' }} fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
-                  Gata în 3–5 minute
-                </div>
-              </div>
-              <p className="text-xs text-gray-600">28+ înregistrări contabile · 16+ anexe · 55–60 pagini</p>
-            </div>
-
-            {/* Right: document preview mockup */}
-            <div className="hidden lg:block">
-              <div className="relative">
-                {/* Subtle glow behind doc */}
-                <div className="absolute inset-0 blur-3xl opacity-10 pointer-events-none" style={{ background: 'radial-gradient(ellipse at center, rgba(0,255,135,0.4) 0%, transparent 70%)' }} />
-
-                {/* Word doc mockup */}
-                <div className="relative rounded-2xl overflow-hidden shadow-2xl" style={{ background: '#1e1e1e', boxShadow: '0 0 60px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.08)' }}>
-                  {/* Demo watermark */}
-                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
-                    <div style={{ transform: 'rotate(-45deg)', fontSize: '11px', fontFamily: 'monospace', color: 'rgba(255,255,255,0.025)', whiteSpace: 'nowrap' }}>
-                      ATESTATAPP.RO — DOCUMENT DEMO — ATESTATAPP.RO — DOCUMENT DEMO
-                    </div>
-                  </div>
-
-                  {/* Title bar */}
-                  <div className="flex items-center gap-2 px-4 py-2.5 border-b" style={{ background: '#2d2d2d', borderColor: 'rgba(255,255,255,0.06)' }}>
-                    <div className="flex gap-1.5">
-                      <div className="w-3 h-3 rounded-full bg-red-500/80" />
-                      <div className="w-3 h-3 rounded-full bg-yellow-500/80" />
-                      <div className="w-3 h-3 rounded-full bg-green-500/80" />
-                    </div>
-                    <div className="flex-1 text-center text-xs text-gray-500">Atestat_DEMO.docx — Microsoft Word</div>
-                  </div>
-
-                  {/* Page content */}
-                  <div className="p-8 space-y-3 text-xs relative z-20" style={{ fontFamily: 'Times New Roman, serif' }}>
-                    <p className="text-center font-bold text-sm">COLEGIUL ECONOMIC DEMO</p>
-                    <p className="text-center text-xs">Localitate, Judet</p>
-                    <div className="border-t border-b border-black py-2 my-3 text-center font-bold text-sm">
-                      ATESTAT
-                    </div>
-                    <p className="text-center text-xs leading-relaxed">Specializarea: <strong>Tehnician in Activitati Economice</strong></p>
-                    <p className="text-xs leading-relaxed">Elev: <strong>NUME ELEV</strong>, clasa a XII-a</p>
-                    <p className="text-xs leading-relaxed">Profesor coordonator: <strong>Prof. Coordonator</strong></p>
-                    <p className="text-xs leading-relaxed">Tema: <em>Disponibilitatile banesti la SC Exemplu SRL</em></p>
-                    <div className="border-t border-dashed border-gray-600 pt-2 mt-4 space-y-1.5">
-                      <p className="text-[11px] text-gray-500 font-bold uppercase tracking-wider">Cuprins</p>
-                      {['Argument', 'Cap. I — Studiu de caz', 'Cap. II — Partea teoretică', 'Cap. III — Contabilitate primară', 'Cap. IV — Analiză financiară', 'Concluzii', 'Bibliografie', 'Anexe (16 documente)'].map((item) => (
-                        <p key={item} className="text-[10px] text-gray-400 leading-tight">{item}</p>
-                      ))}
-                    </div>
-                    <div className="mt-4 p-3 rounded text-[10px] leading-tight space-y-1" style={{ background: 'rgba(0,255,135,0.04)', border: '1px solid rgba(0,255,135,0.12)' }}>
-                      <p className="font-bold text-[10px]" style={{ color: 'var(--green)' }}>✓ Document generat de AI</p>
-                      <p className="text-gray-500">55–60 pagini · Times New Roman 12pt · OMFP 1802/2014</p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Stats below the doc, integrated into copy — no floating badges */}
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── Trust bar ──────────────────────────────────────────────── */}
-      <section className="border-y border-white/5" style={{ background: '#0d0d0d' }}>
-        <div className="max-w-5xl mx-auto px-6 py-5">
-          <div className="flex flex-wrap gap-6 justify-center items-center">
-            {TRUST_BADGES.map(({ icon, label }) => (
-              <div key={label} className="flex items-center gap-2 text-sm text-gray-500">
-                <span>{icon}</span>
-                <span>{label}</span>
-              </div>
-            ))}
-            <div className="hidden sm:block w-px h-4 bg-white/10" />
-            <div className="flex items-center gap-2 text-sm text-gray-500">
-              <svg className="w-4 h-4 shrink-0" style={{ color: 'var(--green)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-              <span>Serviciu pentru România</span>
-            </div>
-            <div className="flex items-center gap-2 text-sm text-gray-500">
-              <svg className="w-4 h-4 shrink-0" style={{ color: 'var(--green)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
-              <span>Plată securizată</span>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── Features ─────────────────────────────────────────────── */}
-      <section id="features" className="py-28 px-6">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-16">
-            <p className="text-xs font-semibold tracking-widest uppercase text-gray-500 mb-3">Ce primești</p>
-            <h2 className="text-4xl md:text-5xl font-black tracking-tight mb-4">
-              Tot ce trebuie pentru
-              <br />
-              <span className="brand-green">nota maximă</span>
-            </h2>
-            <p className="text-gray-400 max-w-lg mx-auto">Fiecare atestat este complet: teorie adaptată temei, contabilitate reală, analiză financiară și anexe oficiale.</p>
-          </div>
-
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {FEATURES.map(({ icon, title, desc }) => (
-              <div key={title} className="dark-card p-6 hover:border-white/15 transition-all duration-200">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-4" style={{ background: 'rgba(0,255,135,0.1)', color: 'var(--green)' }}>
-                  {icon}
-                </div>
-                <h3 className="font-bold text-base mb-2">{title}</h3>
-                <p className="text-sm text-gray-400 leading-relaxed">{desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── How it works ────────────────────────────────────────── */}
-      <section id="cum-functioneaza" className="py-28 px-6" style={{ background: '#0d0d0d' }}>
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-16">
-            <p className="text-xs font-semibold tracking-widest uppercase text-gray-500 mb-3">Cum funcționează</p>
-            <h2 className="text-4xl md:text-5xl font-black tracking-tight">
-              Trei pași simpli.
-              <br />
-              <span className="brand-green">Zero bătăi de cap.</span>
-            </h2>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-6">
-            {[
-              {
-                step: '01',
-                icon: (
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                  </svg>
-                ),
-                title: 'Completezi formularul',
-                desc: '2 minute. Numele tau, liceul, profesorul si firma pe care vrei sa o abordezi. AI-ul face restul.',
-                tip: 'Poti alege din 15 teme predefinite sau propune orice tema economica.',
-              },
-              {
-                step: '02',
-                icon: (
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
-                ),
-                title: 'AI-ul lucreaza',
-                desc: 'In 3–5 minute, AI-ul cauta datele firmei, scrie toate cele 55–60 de pagini si construieste fisierul Word.',
-                tip: 'Date reale: CIF, adresa, CAEN, angajati — toate din surse publice.',
-              },
-              {
-                step: '03',
-                icon: (
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                  </svg>
-                ),
-                title: 'Descarci documentul',
-                desc: 'Primesti un fisier .docx complet formatat, gata de predat. Editabil in Word sau Google Docs.',
-                tip: 'Include minim 25 de inregistrari contabile si 16+ anexe.',
-              },
-            ].map(({ step, icon, title, desc, tip }, i) => (
-              <div key={step} className="dark-card p-8">
-                {/* Step indicator */}
-                <div className="flex items-center gap-3 mb-5">
-                  <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ background: 'rgba(0,255,135,0.1)', border: '1px solid rgba(0,255,135,0.2)' }}>
-                    <span style={{ color: 'var(--green)' }}>{icon}</span>
-                  </div>
-                  <span className="text-xs font-mono" style={{ color: 'rgba(255,255,255,0.2)' }}>{step}</span>
-                </div>
-                <h3 className="font-bold text-lg mb-3">{title}</h3>
-                <p className="text-gray-400 text-sm leading-relaxed mb-4">{desc}</p>
-                <p className="text-xs rounded-lg px-3 py-2 text-gray-500" style={{ background: 'rgba(255,255,255,0.03)', borderLeft: '2px solid rgba(0,255,135,0.3)' }}>{tip}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── Testimonials ────────────────────────────────────────── */}
-      <section className="py-28 px-6">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-16">
-            <p className="text-xs font-semibold tracking-widest uppercase text-gray-500 mb-3">Testimoniale</p>
-            <h2 className="text-4xl font-black tracking-tight">
-              Ce spun{' '}
-              <span className="brand-green">elevii</span>
-            </h2>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-5">
-            {PROOF.map(({ initials, name, school, year, quote, platform }) => (
-              <div key={name} className="dark-card p-6 flex flex-col gap-4 relative">
-                {/* Quote mark decoration */}
-                <div className="absolute top-5 left-5 text-4xl leading-none opacity-5" style={{ color: 'var(--green)' }}>"</div>
-                {/* Stars */}
-                <div className="flex gap-0.5">
-                  {[1,2,3,4,5].map(i => (
-                    <svg key={i} className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20" style={{ color: '#fbbf24' }}>
-                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+              <ul className="space-y-3.5 mb-8">
+                {[
+                  "Document Word complet (55–60 pagini)",
+                  "Toate cele 4 capitole + Argument + Concluzii",
+                  "Minim 25 înregistrări contabile (OMFP 1802/2014)",
+                  "16+ anexe cu documente contabile reale",
+                  "Date firmă căutate automat de AI",
+                  "Format Times New Roman 12pt, spațiere 1.5",
+                  "Editabil în Word / Google Docs / LibreOffice",
+                  "Descărcare imediată după generare",
+                  "Garanție de returnare 24h",
+                ].map((item) => (
+                  <li
+                    key={item}
+                    className="flex items-start gap-3 text-sm text-[var(--ink-2)]"
+                  >
+                    <svg
+                      className="w-4 h-4 mt-0.5 shrink-0 text-[var(--accent)]"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M20 6 9 17l-5-5" />
                     </svg>
-                  ))}
-                </div>
-                <p className="text-gray-300 text-sm leading-relaxed italic relative z-10">"{quote}"</p>
-                <div className="flex items-center gap-3 mt-auto pt-3 border-t" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
-                  <div className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold" style={{ background: 'rgba(0,255,135,0.12)', color: 'var(--green)' }}>{initials}</div>
-                  <div>
-                    <div className="text-sm font-semibold">{name}</div>
-                    <div className="text-xs text-gray-500">{school}</div>
-                    <div className="text-xs" style={{ color: 'var(--green)', opacity: 0.6 }}>{platform} · {year}</div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
 
-      {/* ── Topics ──────────────────────────────────────────────── */}
-      <section className="py-28 px-6" style={{ background: '#0d0d0d' }}>
-        <div className="max-w-4xl mx-auto text-center">
-          <p className="text-xs font-semibold tracking-widest uppercase text-gray-500 mb-3">Teme suportate</p>
-          <h2 className="text-4xl font-black tracking-tight mb-3">15 teme predefinite</h2>
-          <p className="text-gray-400 text-sm mb-12">Plus orice temă economică personalizată.</p>
-          <div className="flex flex-wrap gap-2.5 justify-center">
-            {TOPICS.map((topic) => (
-              <span key={topic} className="text-sm px-4 py-2 rounded-full border transition-all duration-200 cursor-default"
-                style={{ borderColor: 'rgba(0,255,135,0.2)', color: 'rgba(0,255,135,0.85)', background: 'rgba(0,255,135,0.04)' }}>
-                {topic}
-              </span>
-            ))}
-          </div>
-        </div>
-      </section>
+              <Link href="/genereaza" className="btn-accent w-full justify-center text-base py-4">
+                Vreau atestatul meu
+                <svg
+                  className="w-4 h-4"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+                </svg>
+              </Link>
 
-      {/* ── Pricing ─────────────────────────────────────────────── */}
-      <section id="preturi" className="py-28 px-6">
-        <div className="max-w-lg mx-auto text-center">
-          <p className="text-xs font-semibold tracking-widest uppercase text-gray-500 mb-3">Preturi</p>
-          <h2 className="text-4xl font-black tracking-tight mb-4">10 EUR. O singura plata.</h2>
-          <div className="flex flex-col items-center gap-2 mb-12">
-            <div className="flex items-center gap-2 text-sm" style={{ color: 'var(--green)' }}>
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
-              Banii inapoi daca documentul nu se genereaza corect.
-            </div>
-            <p className="text-gray-500 text-sm">Contacteaza-ne in 24h la <a href="mailto:contact@atestatapp.ro" className="underline hover:text-gray-300 transition-colors">contact@atestatapp.ro</a>.</p>
-          </div>
-
-          <div className="dark-card p-10 text-left relative overflow-hidden">
-            <div className="absolute top-0 left-0 right-0 h-1" style={{ background: 'linear-gradient(90deg, var(--green), rgba(0,255,135,0.3))' }} />
-
-            <div className="flex items-end gap-3 mb-1">
-              <span className="text-6xl font-black tracking-tight">10</span>
-              <span className="text-2xl font-bold text-gray-400 mb-2">EUR</span>
-            </div>
-            <p className="text-gray-500 text-sm mb-8">per atestat · o singură plată · fără abonament</p>
-
-            <ul className="space-y-3.5 mb-8">
-              {[
-                'Document Word complet (55–60 pagini)',
-                'Toate cele 4 capitole + Argument',
-                'Minim 25 înregistrări contabile',
-                '16+ anexe cu documente reale',
-                'Date firmă căutate automat de AI',
-                'Adaptat oricărui liceu economic',
-                'Format Times New Roman 12pt, spațiere 1.5',
-                'Descărcare imediată după generare',
-              ].map((item) => (
-                <li key={item} className="flex items-start gap-3 text-sm">
-                  <svg className="w-5 h-5 shrink-0 mt-0.5" style={{ color: 'var(--green)' }} fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+              <div className="mt-5 flex items-center justify-center gap-4 text-xs text-[var(--ink-soft)]">
+                <span className="inline-flex items-center gap-1.5">
+                  <svg
+                    className="w-3.5 h-3.5"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <rect x="3" y="11" width="18" height="11" rx="2" />
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
                   </svg>
-                  <span className="text-gray-300">{item}</span>
-                </li>
-              ))}
-            </ul>
+                  Plată securizată
+                </span>
+                <span className="inline-flex items-center gap-1.5">
+                  <svg
+                    className="w-3.5 h-3.5"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                  </svg>
+                  Fără risc
+                </span>
+              </div>
+            </motion.div>
 
-            <Link href="/genereaza" className="btn-green block w-full text-center py-4 font-bold text-sm">
-              Vreau atestatul meu →
-            </Link>
-            <p className="text-center text-gray-600 text-xs mt-4">Plată securizată · Fără taxa ascunse</p>
-          </div>
+            <p className="text-center text-xs text-[var(--ink-soft)] mt-6">
+              Nu ești mulțumit? Scrie-ne la{" "}
+              <a
+                href="mailto:contact@atestatapp.ro"
+                className="underline hover:text-[var(--ink)] transition-colors"
+              >
+                contact@atestatapp.ro
+              </a>{" "}
+              și îți returnăm banii în 24h.
+            </p>
+          </SectionReveal>
         </div>
       </section>
 
-      {/* ── FAQ ───────────────────────────────────────────────── */}
-      <section className="py-28 px-6" style={{ background: '#0d0d0d' }}>
-        <div className="max-w-2xl mx-auto">
-          <div className="text-center mb-14">
-            <p className="text-xs font-semibold tracking-widest uppercase text-gray-500 mb-3">Întrebări frecvente</p>
-            <h2 className="text-4xl font-black tracking-tight">Ai întrebări?</h2>
-          </div>
-
-          <div className="space-y-2">
-            {FAQ.map(({ q, a }) => (
-              <details key={q} className="group dark-card overflow-hidden rounded-xl">
-                <summary className="px-6 py-5 cursor-pointer font-semibold text-sm text-gray-200 list-none flex items-center justify-between hover:text-white transition-colors">
-                  {q}
-                  <span className="text-gray-500 group-open:text-green transition-colors" style={{ fontSize: '18px', lineHeight: 1, fontWeight: 300 }}>
-                    <span className="group-open:hidden">+</span>
-                    <span className="hidden group-open:inline">×</span>
-                  </span>
-                </summary>
-                <div className="px-6 pb-6 border-t" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
-                  <p className="text-gray-400 text-sm leading-relaxed pt-4">{a}</p>
-                </div>
-              </details>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── CTA ────────────────────────────────────────────────── */}
-      <section className="py-28 px-6 relative overflow-hidden">
-        <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse 70% 70% at 50% 50%, rgba(0,255,135,0.08) 0%, transparent 70%)' }} />
-        <div className="relative z-10 max-w-2xl mx-auto text-center">
-          <h2 className="text-4xl md:text-5xl font-black tracking-tight mb-5">
-            Gata să termini
-            <br />
-            <span className="brand-green">atestatul?</span>
-          </h2>
-          <p className="text-gray-400 mb-10">2 minute de completat formularul. 3–5 minute de așteptat. Un atestat de nota 10.</p>
-          <Link href="/genereaza" className="btn-green inline-block px-12 py-4 font-bold text-sm">
-            Vreau atestatul meu →
-          </Link>
-          <p className="text-gray-600 text-xs mt-5">10 EUR · fără abonament · banii înapoi în 24h dacă ceva nu functionează</p>
-        </div>
-      </section>
-
-      {/* ── Footer ───────────────────────────────────────────── */}
-      <footer className="border-t border-white/5 py-10 px-6" style={{ background: '#0d0d0d' }}>
-        <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-md flex items-center justify-center" style={{ background: 'var(--green)' }}>
-              <span className="text-[10px] font-black text-[#0a0a0a]">A</span>
+      {/* ── FAQ ───────────────────────────────────────────────────────── */}
+      <section className="section">
+        <div className="container max-w-3xl">
+          <SectionReveal>
+            <div className="text-center mb-12">
+              <p className="eyebrow mb-3">Întrebări frecvente</p>
+              <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
+                Mai ai <span className="serif italic text-gradient-emerald">nelămuriri?</span>
+              </h2>
             </div>
-            <span className="text-base font-bold">Atestat<span className="brand-green">App</span></span>
+
+            <div className="space-y-3">
+              {FAQ.map(({ q, a }, i) => (
+                <motion.details key={q} variants={fadeUp} custom={i} className="group card p-0 overflow-hidden">
+                  <summary className="px-6 py-5 cursor-pointer font-semibold text-[var(--ink)] flex items-center justify-between gap-4 list-none">
+                    <span>{q}</span>
+                    <span className="w-7 h-7 rounded-full bg-[var(--bg-warm)] group-open:bg-[var(--accent)] group-open:text-[#04140D] flex items-center justify-center shrink-0 transition-all duration-300">
+                      <svg
+                        className="w-3.5 h-3.5 group-open:rotate-45 transition-transform duration-300"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M12 5v14M5 12h14" />
+                      </svg>
+                    </span>
+                  </summary>
+                  <div className="px-6 pb-5 text-[var(--ink-muted)] leading-relaxed text-[15px] border-t border-[var(--border-soft)] pt-4">
+                    {a}
+                  </div>
+                </motion.details>
+              ))}
+            </div>
+          </SectionReveal>
+        </div>
+      </section>
+
+      {/* ── FINAL CTA ─────────────────────────────────────────────────── */}
+      <section className="section">
+        <div className="container">
+          <SectionReveal>
+            <div className="max-w-3xl mx-auto text-center glass rounded-3xl px-6 py-14 md:py-20 relative overflow-hidden">
+              <div className="absolute inset-0 gradient-pan opacity-30" aria-hidden />
+              <div
+                className="absolute -top-20 -right-20 w-64 h-64 rounded-full blur-3xl"
+                style={{ background: "var(--accent-glow-sm)" }}
+                aria-hidden
+              />
+              <div
+                className="absolute -bottom-20 -left-20 w-64 h-64 rounded-full blur-3xl"
+                style={{ background: "var(--accent-glow-sm)" }}
+                aria-hidden
+              />
+
+              <div className="relative">
+                <p className="eyebrow mb-3">Gata să începi?</p>
+                <h2 className="text-3xl md:text-5xl font-bold tracking-tight mb-5 leading-tight">
+                  În 3 minute ai atestatul.{" "}
+                  <span className="serif italic text-gradient-emerald">Promitem.</span>
+                </h2>
+                <p className="text-[var(--ink-muted)] mb-8 max-w-md mx-auto">
+                  2 minute completezi formularul. 3 minute aștepți. 0 nopți nedormite. Încearcă acum
+                  — banii înapoi dacă nu e mulțumit.
+                </p>
+                <Link href="/genereaza" className="btn-accent text-base py-4 px-8">
+                  Începe acum — 10 EUR
+                  <svg
+                    className="w-4 h-4"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+                  </svg>
+                </Link>
+                <p className="text-xs text-[var(--ink-soft)] mt-4">
+                  10 EUR · fără abonament · returnare 24h · suport în română
+                </p>
+              </div>
+            </div>
+          </SectionReveal>
+        </div>
+      </section>
+
+      {/* ── FOOTER ────────────────────────────────────────────────────── */}
+      <footer className="border-t border-[var(--border-soft)] bg-[var(--bg-elev)] mt-0">
+        <div className="container py-16">
+          <div className="grid md:grid-cols-4 gap-10 mb-12">
+            <div className="md:col-span-2">
+              <Link href="/" className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-[var(--accent)] flex items-center justify-center">
+                  <span className="text-[#04140D] font-bold text-sm">A</span>
+                </div>
+                <span className="font-semibold text-[var(--ink)] tracking-tight">
+                  Atestat<span className="serif italic">App</span>
+                  <span className="text-[var(--ink-muted)]">.ro</span>
+                </span>
+              </Link>
+              <p className="mt-4 text-sm text-[var(--ink-muted)] max-w-sm leading-relaxed">
+                Platforma #1 din România pentru atestate profesionale generate cu AI. Peste 300 de
+                elevi au terminat deja atestatul în mai puțin de 5 minute.
+              </p>
+            </div>
+            <div>
+              <h4 className="eyebrow mb-3">Produs</h4>
+              <ul className="space-y-2 text-sm text-[var(--ink-muted)]">
+                <li>
+                  <a href="#cum-functioneaza" className="hover:text-[var(--ink)] transition-colors">
+                    Cum funcționează
+                  </a>
+                </li>
+                <li>
+                  <a href="#ce-primesti" className="hover:text-[var(--ink)] transition-colors">
+                    Ce primești
+                  </a>
+                </li>
+                <li>
+                  <a href="#teme" className="hover:text-[var(--ink)] transition-colors">
+                    Teme disponibile
+                  </a>
+                </li>
+                <li>
+                  <a href="#preturi" className="hover:text-[var(--ink)] transition-colors">
+                    Preț
+                  </a>
+                </li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="eyebrow mb-3">Suport</h4>
+              <ul className="space-y-2 text-sm text-[var(--ink-muted)]">
+                <li>
+                  <a
+                    href="mailto:contact@atestatapp.ro"
+                    className="hover:text-[var(--ink)] transition-colors"
+                  >
+                    contact@atestatapp.ro
+                  </a>
+                </li>
+                <li>
+                  <span className="text-[var(--ink-faint)]">Răspundem în max 24h</span>
+                </li>
+                <li>
+                  <span className="text-[var(--ink-faint)]">Luni – Duminică</span>
+                </li>
+              </ul>
+            </div>
           </div>
-          <p className="text-gray-600 text-sm">© {new Date().getFullYear()} AtestatApp · atestatapp.ro</p>
-          <p className="text-gray-600 text-sm">Platforma românilor pentru atestate profesionale</p>
+          <div className="pt-8 border-t border-[var(--border-soft)] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-xs text-[var(--ink-faint)]">
+            <p>© {new Date().getFullYear()} AtestatApp · Toate drepturile rezervate</p>
+            <p>Plată procesată securizat prin Stripe · Date criptate SSL</p>
+          </div>
         </div>
       </footer>
     </main>
-  )
+  );
 }

@@ -1,21 +1,48 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter, Instrument_Serif, Geist_Mono } from "next/font/google";
+import { MotionConfig } from "framer-motion";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const inter = Inter({
+  variable: "--font-inter",
+  subsets: ["latin", "latin-ext"],
+  display: "swap",
+});
+
+const instrumentSerif = Instrument_Serif({
+  variable: "--font-instrument-serif",
   subsets: ["latin"],
+  weight: ["400"],
+  style: ["normal", "italic"],
+  display: "swap",
 });
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "AtestatApp — Atestate profesionale în 60 de secunde",
+  title: "AtestatApp.ro — Atestatul tău profesional, gata în 3 minute",
   description:
-    "Generează atestat profesional pentru liceu economic în 60 de secunde. 10 EUR, document Word complet de 55-60 pagini, adaptat la orice firmă și temă.",
+    "Generează atestatul profesional pentru liceu economic în 3 minute. 10 EUR, document Word complet de 55-60 pagini, contabilitate reală și anexe oficiale. Banii înapoi dacă nu ești mulțumit.",
+  keywords: [
+    "atestat profesional",
+    "atestat liceu",
+    "atestat economic",
+    "proiect atestat",
+    "atestat Word",
+    "atestat app",
+    "atestat 2026",
+  ],
+  openGraph: {
+    title: "AtestatApp.ro — Atestatul tău profesional, gata în 3 minute",
+    description:
+      "10 EUR · Document Word complet · 55-60 pagini · Contabilitate reală · Gata în 3 minute",
+    locale: "ro_RO",
+    type: "website",
+  },
 };
 
 export default function RootLayout({
@@ -26,9 +53,16 @@ export default function RootLayout({
   return (
     <html
       lang="ro"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${inter.variable} ${instrumentSerif.variable} ${geistMono.variable} antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-screen flex flex-col bg-[var(--bg)] text-[var(--ink)]">
+        <MotionConfig
+          transition={{ duration: 0.3, ease: [0.23, 1, 0.32, 1] }}
+          reducedMotion="user"
+        >
+          {children}
+        </MotionConfig>
+      </body>
     </html>
   );
 }
