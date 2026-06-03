@@ -605,7 +605,7 @@ export default function Home() {
         />
 
         <div className="container">
-          <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+          <div className="grid lg:grid-cols-[1.15fr_1fr] gap-12 lg:gap-12 xl:gap-16 items-center">
             <motion.div
               initial="hidden"
               animate="visible"
