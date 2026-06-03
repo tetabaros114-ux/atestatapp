@@ -360,35 +360,103 @@ function DocumentPreview() {
           </div>
         </div>
 
-        {/* Floating stats badges */}
+        {/* Annotation labels — sit in the dark negative space, point to a
+            specific line on the document, slightly rotated for organic feel. */}
         <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.9, duration: 0.5, ease: [0.23, 1, 0.32, 1] }}
-          className="absolute -left-4 top-12 glass rounded-xl shadow-2xl px-3 py-2 text-xs hidden lg:flex items-center gap-2"
+          initial={{ opacity: 0, x: -10, y: 6, rotate: 0 }}
+          animate={{ opacity: 1, x: 0, y: 0, rotate: -3 }}
+          transition={{ delay: 0.95, duration: 0.55, ease: [0.23, 1, 0.32, 1] }}
+          className="absolute -left-28 top-24 z-20 hidden xl:block"
         >
-          <div className="w-2 h-2 rounded-full bg-[var(--accent)] glow-pulse" />
-          <span className="font-semibold text-[var(--ink)]">25+</span>
-          <span className="text-[var(--ink-muted)]">înregistrări contabile</span>
-        </motion.div>
-        <motion.div
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 1.1, duration: 0.5, ease: [0.23, 1, 0.32, 1] }}
-          className="absolute -right-4 bottom-16 glass rounded-xl shadow-2xl px-3 py-2 text-xs hidden lg:flex items-center gap-2"
-        >
+          {/* connector line + dot pointing into the document */}
           <svg
-            className="w-3.5 h-3.5 text-[var(--accent)]"
-            viewBox="0 0 24 24"
+            className="absolute left-full top-1/2 -translate-y-1/2 pointer-events-none"
+            width="64"
+            height="20"
+            viewBox="0 0 64 20"
             fill="none"
-            stroke="currentColor"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
+            aria-hidden
           >
-            <path d="M20 6 9 17l-5-5" />
+            <line
+              x1="0"
+              y1="10"
+              x2="58"
+              y2="10"
+              stroke="currentColor"
+              strokeWidth="1"
+              strokeDasharray="2 3"
+              className="text-[var(--ink-faint)]"
+            />
+            <circle cx="62" cy="10" r="2.5" className="fill-[var(--accent)]" />
+            <circle cx="62" cy="10" r="5" className="fill-[var(--accent)] opacity-25">
+              <animate attributeName="r" values="3;7;3" dur="2.4s" repeatCount="indefinite" />
+              <animate attributeName="opacity" values="0.35;0;0.35" dur="2.4s" repeatCount="indefinite" />
+            </circle>
           </svg>
-          <span className="font-semibold text-[var(--ink)]">Format MEN</span>
+          <div className="glass rounded-lg shadow-2xl px-3 py-2 text-[11px] leading-tight flex items-center gap-2.5 border-[var(--border-strong)]">
+            <div className="w-1.5 h-1.5 rounded-full bg-[var(--accent)] glow-pulse" />
+            <div className="flex flex-col">
+              <span className="font-mono text-[9px] uppercase tracking-wider text-[var(--ink-faint)]">
+                Cap. III
+              </span>
+              <span>
+                <span className="font-semibold text-[var(--ink)]">25+</span>{" "}
+                <span className="text-[var(--ink-muted)]">înregistrări contabile</span>
+              </span>
+            </div>
+          </div>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, x: 10, y: -6, rotate: 0 }}
+          animate={{ opacity: 1, x: 0, y: 0, rotate: 2.5 }}
+          transition={{ delay: 1.15, duration: 0.55, ease: [0.23, 1, 0.32, 1] }}
+          className="absolute -right-32 bottom-24 z-20 hidden xl:block"
+        >
+          {/* connector line + dot pointing into the document */}
+          <svg
+            className="absolute right-full top-1/2 -translate-y-1/2 pointer-events-none"
+            width="64"
+            height="20"
+            viewBox="0 0 64 20"
+            fill="none"
+            aria-hidden
+          >
+            <line
+              x1="6"
+              y1="10"
+              x2="64"
+              y2="10"
+              stroke="currentColor"
+              strokeWidth="1"
+              strokeDasharray="2 3"
+              className="text-[var(--ink-faint)]"
+            />
+            <circle cx="2" cy="10" r="2.5" className="fill-[var(--accent)]" />
+            <circle cx="2" cy="10" r="5" className="fill-[var(--accent)] opacity-25">
+              <animate attributeName="r" values="3;7;3" dur="2.4s" repeatCount="indefinite" />
+              <animate attributeName="opacity" values="0.35;0;0.35" dur="2.4s" repeatCount="indefinite" />
+            </circle>
+          </svg>
+          <div className="glass rounded-lg shadow-2xl px-3 py-2 text-[11px] leading-tight flex items-center gap-2.5 border-[var(--border-strong)]">
+            <svg
+              className="w-3 h-3 text-[var(--accent)] shrink-0"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M20 6 9 17l-5-5" />
+            </svg>
+            <div className="flex flex-col">
+              <span className="font-mono text-[9px] uppercase tracking-wider text-[var(--ink-faint)]">
+                Conform
+              </span>
+              <span className="font-semibold text-[var(--ink)]">Format MEN</span>
+            </div>
+          </div>
         </motion.div>
       </div>
     </motion.div>
@@ -503,8 +571,13 @@ export default function Home() {
             Preț
           </a>
         </nav>
-        <Link href="/genereaza" className="btn-primary text-xs py-1.5 px-3 shrink-0 ml-auto md:ml-0">
-          Începe acum
+        <Link
+          href="/genereaza"
+          className="nav-cta shrink-0 ml-auto md:ml-0"
+          aria-label="Începe acum — generează atestatul"
+        >
+          <span className="hidden sm:inline">Începe acum</span>
+          <span className="sm:hidden">Începe</span>
           <svg
             className="w-3 h-3"
             viewBox="0 0 24 24"

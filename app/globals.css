@@ -229,6 +229,45 @@ body::before {
 }
 .btn-ghost:hover { background: rgba(255, 255, 255, 0.04); }
 
+/* ── Nav CTA (designed to live inside FloatingNav) ─────────────── */
+.nav-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  height: 1.875rem;          /* 30px — same height as nav row */
+  padding: 0 0.75rem;
+  font-size: 0.75rem;        /* 12px */
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.005em;
+  color: #04140D;
+  background: var(--accent);
+  border: 1px solid rgba(16, 185, 129, 0.6);
+  border-radius: 999px;
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 0 0 0 var(--accent-glow-sm);
+  transition:
+    background-color 0.18s var(--ease-out-quint),
+    transform 0.18s var(--ease-out-quint),
+    box-shadow 0.25s var(--ease-out-quint);
+  white-space: nowrap;
+}
+.nav-cta:hover {
+  background: var(--accent-hover);
+  transform: translateY(-1px);
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    0 0 0 4px var(--accent-glow-sm);
+}
+.nav-cta:active { transform: translateY(0) scale(0.97); transition-duration: 0.1s; }
+@media (min-width: 768px) {
+  .nav-cta { height: 2rem; padding: 0 0.875rem; font-size: 0.8125rem; }
+}
+
 /* ── Card (glass panel) ──────────────────────────────────────────── */
 .card {
   background: var(--bg-elev);
