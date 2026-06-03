@@ -220,41 +220,64 @@ function SectionReveal({ children, className }: { children: React.ReactNode; cla
 /* ─── Hero headline with text-reveal ────────────────────────────────── */
 
 function HeroHeadline() {
-  const headline = "Atestatul tău,";
-  const headline2 = "gata în 5–10 minute.";
+  // Words are wrapped in inline-block + whitespace-nowrap so the browser
+  // can only break the line BETWEEN words — never inside "minute." or
+  // across "5–10". The reveal animation still runs char-by-char inside
+  // each word. "5–10 minute." is a single atomic unit (nbsp between
+  // "10" and "minute").
+  const line1 = "Atestatul tău,";
+  const line2Words = ["gata", "în", "5–10 minute."];
+
+  let charIndex = 0;
   return (
     <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight leading-[1.05] mb-6">
       <span className="block">
-        {headline.split("").map((char, i) => (
-          <span
-            key={i}
-            className="inline-block"
-            style={
-              {
-                "--index": i,
-                animation: "reveal 1.1s cubic-bezier(0.19, 1, 0.22, 1) backwards",
-                animationDelay: `calc(var(--index) * 0.025s)`,
-              } as React.CSSProperties
-            }
-          >
-            {char === " " ? " " : char}
+        {line1.split(" ").map((word, wi, arr) => (
+          <span key={wi} className="inline-block whitespace-nowrap">
+            {word.split("").map((char, ci) => {
+              const i = charIndex++;
+              return (
+                <span
+                  key={ci}
+                  className="inline-block"
+                  style={
+                    {
+                      "--index": i,
+                      animation: "reveal 1.1s cubic-bezier(0.19, 1, 0.22, 1) backwards",
+                      animationDelay: `calc(var(--index) * 0.025s)`,
+                    } as React.CSSProperties
+                  }
+                >
+                  {char}
+                </span>
+              );
+            })}
+            {wi < arr.length - 1 ? " " : ""}
           </span>
         ))}
       </span>
       <span className="block text-gradient-emerald">
-        {headline2.split("").map((char, i) => (
-          <span
-            key={i}
-            className="inline-block italic"
-            style={
-              {
-                "--index": i + headline.length,
-                animation: "reveal 1.1s cubic-bezier(0.19, 1, 0.22, 1) backwards",
-                animationDelay: `calc(var(--index) * 0.025s)`,
-              } as React.CSSProperties
-            }
-          >
-            {char === " " ? " " : char}
+        {line2Words.map((word, wi, arr) => (
+          <span key={wi} className="inline-block whitespace-nowrap italic">
+            {word.split("").map((char, ci) => {
+              const i = charIndex++;
+              return (
+                <span
+                  key={ci}
+                  className="inline-block"
+                  style={
+                    {
+                      "--index": i,
+                      animation: "reveal 1.1s cubic-bezier(0.19, 1, 0.22, 1) backwards",
+                      animationDelay: `calc(var(--index) * 0.025s)`,
+                    } as React.CSSProperties
+                  }
+                >
+                  {char}
+                </span>
+              );
+            })}
+            {wi < arr.length - 1 ? " " : ""}
           </span>
         ))}
       </span>
@@ -998,7 +1021,7 @@ export default function Home() {
               >
 
               <div className="flex items-baseline gap-1.5 mb-1">
-                <span className="text-6xl font-bold tracking-tight">10</span>
+                <span className="text-6xl font-bold tracking-tight">20</span>
                 <span className="text-2xl font-semibold text-[var(--ink-muted)]">EUR</span>
               </div>
               <p className="text-sm text-[var(--ink-muted)] mb-7">
@@ -1206,7 +1229,7 @@ export default function Home() {
               </Link>
               <p className="mt-4 text-sm text-[var(--ink-muted)] max-w-sm leading-relaxed">
                 Platforma #1 din România pentru atestate profesionale generate cu AI. Peste 300 de
-                elevi au terminat deja atestatul în mai puțin de 5 minute.
+                elevi au terminat deja atestatul în 5–10 minute.
               </p>
             </div>
             <div>
