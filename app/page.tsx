@@ -237,7 +237,6 @@ function HeroHeadline() {
     let i = 0;
     while (i < s.length) {
       if (s.startsWith(unitStr, i)) {
-        out.push({ ch: " ", inUnit: false });
         for (const c of unitStr) {
           out.push({ ch: c, inUnit: true });
         }
@@ -294,7 +293,7 @@ function HeroHeadline() {
         );
       }
     });
-    flushBuffer(9999);
+    flushBuffer(0);
     return chunks;
   };
 
@@ -325,12 +324,12 @@ function DocumentPreview() {
     <motion.div
       initial={{ opacity: 0, y: 30, rotateX: 8 }}
       animate={{ opacity: 1, y: 0, rotateX: 0 }}
-      transition={{ duration: 0.8, ease: [0.23, 1, 0.32, 1], delay: 0.3 }}
+      transition={{ duration: 0.8, ease: [0.23, 1, 0.32, 1], delay: 1.0 }}
       className="relative"
     >
       {/* Soft emerald glow halo behind */}
       <div
-        className="absolute -inset-8 rounded-3xl pointer-events-none"
+        className="absolute -inset-4 rounded-3xl pointer-events-none"
         style={{
           background:
             "radial-gradient(ellipse at center, var(--accent-glow-sm) 0%, transparent 70%)",
@@ -473,16 +472,16 @@ function DocumentPreview() {
             aria-hidden
           >
             <line
-              x1="6"
+              x1="0"
               y1="10"
-              x2="32"
+              x2="26"
               y2="10"
               stroke="currentColor"
               strokeWidth="1"
               strokeDasharray="2 3"
               className="text-[var(--ink-faint)]"
             />
-            <circle cx="2" cy="10" r="2.5" className="fill-[var(--accent)]" />
+            <circle cx="30" cy="10" r="2.5" className="fill-[var(--accent)]" />
             <circle cx="2" cy="10" r="5" className="fill-[var(--accent)] opacity-25">
               <animate attributeName="r" values="3;7;3" dur="2.4s" repeatCount="indefinite" />
               <animate attributeName="opacity" values="0.35;0;0.35" dur="2.4s" repeatCount="indefinite" />
@@ -656,28 +655,27 @@ export default function Home() {
         />
 
         <div className="container">
-          <div className="grid lg:grid-cols-[1.15fr_1fr] gap-12 lg:gap-12 xl:gap-16 items-center">
+          <div className="grid lg:grid-cols-2 xl:grid-cols-[1.1fr_1fr] gap-10 lg:gap-12 xl:gap-16 items-center">
             <motion.div
               initial="hidden"
               animate="visible"
               variants={containerStagger}
             >
               <motion.div variants={fadeUp} custom={0} className="inline-flex items-center gap-2 mb-6">
-                <span className="eyebrow-emerald">v2 · AI Streaming Engine</span>
+                <span className="eyebrow-emerald">Generat cu AI · Format MEN</span>
               </motion.div>
 
               <HeroHeadline />
 
               <motion.p
                 variants={fadeUp}
-                custom={3}
+                custom={8}
                 className="text-lg text-[var(--ink-muted)] leading-relaxed mb-8 max-w-xl"
               >
-                Completezi un scurt formular, plătești o singură dată{" "}
-                <strong className="text-[var(--ink)]">20 EUR</strong>, și primești un document Word
-                complet —{" "}
-                <strong className="text-[var(--ink)]">55–60 de pagini</strong> formatate conform
-                cerințelor MEN, cu contabilitate reală și anexe oficiale.
+                Primești un document Word complet —{" "}
+                <strong className="text-[var(--ink)]">55–60 de pagini</strong> în format MEN, cu contabilitate reală și anexe.{" "}
+                O singură plată de{" "}
+                <strong className="text-[var(--ink)]">20 EUR</strong>, fără abonament.
               </motion.p>
 
               <motion.div
@@ -686,7 +684,7 @@ export default function Home() {
                 className="flex flex-col sm:flex-row gap-3 mb-6"
               >
                 <Link href="/genereaza" className="btn-accent text-base py-4 px-6">
-                  Generează atestatul meu
+                  Vreau atestatul meu — 20 EUR
                   <svg
                     className="w-4 h-4"
                     viewBox="0 0 24 24"
@@ -735,7 +733,7 @@ export default function Home() {
                   >
                     <path d="M20 6 9 17l-5-5" />
                   </svg>
-                  Gata în 5–10 minute
+                  Format MEN
                 </span>
                 <span className="inline-flex items-center gap-1.5">
                   <svg
@@ -749,7 +747,7 @@ export default function Home() {
                   >
                     <path d="M20 6 9 17l-5-5" />
                   </svg>
-                  Banii înapoi în 24h
+                  Document Word editabil
                 </span>
               </motion.div>
             </motion.div>
