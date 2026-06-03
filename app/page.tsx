@@ -251,7 +251,7 @@ function HeroHeadline() {
           </span>
         ))}
       </span>
-      <span className="block text-gradient-emerald">
+      <span className="block text-[var(--accent-2)]">
         {flat2.map((char, i) => (
           <span
             key={`l2-${i}`}
