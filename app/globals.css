@@ -411,8 +411,7 @@ textarea.input { resize: vertical; min-height: 88px; line-height: 1.5; }
 }
 .char-reveal {
   display: inline-block;
-  opacity: 0;
-  animation: charReveal 1.1s var(--ease-reveal) backwards;
+  animation: charReveal 1.1s var(--ease-reveal) both;
   animation-delay: calc(var(--index, 0) * 0.025s);
 }
 
