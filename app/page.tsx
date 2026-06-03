@@ -220,73 +220,48 @@ function SectionReveal({ children, className }: { children: React.ReactNode; cla
 /* ─── Hero headline with text-reveal ────────────────────────────────── */
 
 function HeroHeadline() {
-  // Words are wrapped in inline-block + whitespace-nowrap so the browser
-  // can only break the line BETWEEN words — never inside "minute." or
-  // across "5–10". The reveal animation still runs char-by-char inside
-  // each word. "5–10 minute." is a single atomic unit (nbsp between
-  // "10" and "minute").
+  // "5–10 minute." is a single atomic unit (nbsp between "10" and "minute")
+  // so the dash and the word can never break onto separate lines.
+  // flat arrays of { char } so each char gets a unique --index without
+  // shared mutable state across .map calls.
   const line1 = "Atestatul tău,";
-  const line2Words = ["gata", "în", "5–10 minute."];
+  const line2Words = ["gata", "în", "5–10 minute."];
 
-  let charIndex = 0;
+  const flat1 = line1.split("").map((c) => c);
+  const flat2 = line2Words
+    .map((w) => w.split(""))
+    .reduce<string[]>((acc, chars, i) => {
+      if (i > 0) acc.push(" ");
+      acc.push(...chars);
+      return acc;
+    }, []);
+
   return (
-    <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight leading-[1.05] mb-6">
+    // text-5xl at md, text-6xl at lg — keeps the 2-col grid (lg) left column
+    // (~530px) wide enough to fit "gata în 5–10 minute." on one line.
+    <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight leading-[1.05] mb-6">
       <span className="block">
-        {line1.split(" ").map((word, wi, arr) => (
-          <span key={wi} className="inline-block whitespace-nowrap">
-            {word.split("").map((char, ci) => {
-              const i = charIndex++;
-              return (
-                <span
-                  key={ci}
-                  className="inline-block"
-                  style={
-                    {
-                      "--index": i,
-                      animation: "reveal 1.1s cubic-bezier(0.19, 1, 0.22, 1) backwards",
-                      animationDelay: `calc(var(--index) * 0.025s)`,
-                    } as React.CSSProperties
-                  }
-                >
-                  {char}
-                </span>
-              );
-            })}
-            {wi < arr.length - 1 ? " " : ""}
+        {flat1.map((char, i) => (
+          <span
+            key={`l1-${i}`}
+            className="char-reveal"
+            style={{ "--index": i } as React.CSSProperties}
+          >
+            {char === " " ? " " : char}
           </span>
         ))}
       </span>
       <span className="block text-gradient-emerald">
-        {line2Words.map((word, wi, arr) => (
-          <span key={wi} className="inline-block whitespace-nowrap italic">
-            {word.split("").map((char, ci) => {
-              const i = charIndex++;
-              return (
-                <span
-                  key={ci}
-                  className="inline-block"
-                  style={
-                    {
-                      "--index": i,
-                      animation: "reveal 1.1s cubic-bezier(0.19, 1, 0.22, 1) backwards",
-                      animationDelay: `calc(var(--index) * 0.025s)`,
-                    } as React.CSSProperties
-                  }
-                >
-                  {char}
-                </span>
-              );
-            })}
-            {wi < arr.length - 1 ? " " : ""}
+        {flat2.map((char, i) => (
+          <span
+            key={`l2-${i}`}
+            className="char-reveal italic"
+            style={{ "--index": i + flat1.length } as React.CSSProperties}
+          >
+            {char === " " ? " " : char}
           </span>
         ))}
       </span>
-      <style jsx>{`
-        @keyframes reveal {
-          from { transform: translateY(100%); opacity: 0; }
-          to { transform: translateY(0); opacity: 1; }
-        }
-      `}</style>
     </h1>
   );
 }
@@ -389,29 +364,29 @@ function DocumentPreview() {
           initial={{ opacity: 0, x: -10, y: 6, rotate: 0 }}
           animate={{ opacity: 1, x: 0, y: 0, rotate: -3 }}
           transition={{ delay: 0.95, duration: 0.55, ease: [0.23, 1, 0.32, 1] }}
-          className="absolute -left-28 top-24 z-20 hidden xl:block"
+          className="absolute -left-12 top-8 z-20 hidden xl:block"
         >
           {/* connector line + dot pointing into the document */}
           <svg
             className="absolute left-full top-1/2 -translate-y-1/2 pointer-events-none"
-            width="64"
+            width="32"
             height="20"
-            viewBox="0 0 64 20"
+            viewBox="0 0 32 20"
             fill="none"
             aria-hidden
           >
             <line
               x1="0"
               y1="10"
-              x2="58"
+              x2="26"
               y2="10"
               stroke="currentColor"
               strokeWidth="1"
               strokeDasharray="2 3"
               className="text-[var(--ink-faint)]"
             />
-            <circle cx="62" cy="10" r="2.5" className="fill-[var(--accent)]" />
-            <circle cx="62" cy="10" r="5" className="fill-[var(--accent)] opacity-25">
+            <circle cx="30" cy="10" r="2.5" className="fill-[var(--accent)]" />
+            <circle cx="30" cy="10" r="5" className="fill-[var(--accent)] opacity-25">
               <animate attributeName="r" values="3;7;3" dur="2.4s" repeatCount="indefinite" />
               <animate attributeName="opacity" values="0.35;0;0.35" dur="2.4s" repeatCount="indefinite" />
             </circle>
@@ -434,21 +409,21 @@ function DocumentPreview() {
           initial={{ opacity: 0, x: 10, y: -6, rotate: 0 }}
           animate={{ opacity: 1, x: 0, y: 0, rotate: 2.5 }}
           transition={{ delay: 1.15, duration: 0.55, ease: [0.23, 1, 0.32, 1] }}
-          className="absolute -right-32 bottom-24 z-20 hidden xl:block"
+          className="absolute -right-12 bottom-12 z-20 hidden xl:block"
         >
           {/* connector line + dot pointing into the document */}
           <svg
             className="absolute right-full top-1/2 -translate-y-1/2 pointer-events-none"
-            width="64"
+            width="32"
             height="20"
-            viewBox="0 0 64 20"
+            viewBox="0 0 32 20"
             fill="none"
             aria-hidden
           >
             <line
               x1="6"
               y1="10"
-              x2="64"
+              x2="32"
               y2="10"
               stroke="currentColor"
               strokeWidth="1"
@@ -787,7 +762,7 @@ export default function Home() {
             <div className="text-center mb-12 max-w-2xl mx-auto">
               <p className="eyebrow mb-3">Cum funcționează</p>
               <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
-                Trei pași. <span className="serif italic text-gradient-emerald">Aproape magic.</span>
+                Trei pași. <span className="serif italic text-[var(--ink-muted)]">Aproape magic.</span>
               </h2>
             </div>
 
@@ -871,7 +846,7 @@ export default function Home() {
               <p className="eyebrow mb-3">Ce primești</p>
               <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-4">
                 Tot ce trebuie pentru{" "}
-                <span className="serif italic text-gradient-emerald">nota maximă.</span>
+                <span className="serif italic text-[var(--ink-muted)]">nota maximă.</span>
               </h2>
               <p className="text-[var(--ink-muted)] leading-relaxed">
                 Fiecare atestat e complet: teorie adaptată temei, contabilitate reală, analiză
@@ -907,7 +882,7 @@ export default function Home() {
             <p className="eyebrow mb-3">Teme suportate</p>
             <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-4">
               15 teme predefinite.{" "}
-              <span className="serif italic text-gradient-emerald">Sau orice temă vrei tu.</span>
+              <span className="serif italic text-[var(--ink-muted)]">Sau orice temă vrei tu.</span>
             </h2>
             <p className="text-[var(--ink-muted)] mb-10 max-w-xl mx-auto">
               Nu ești limitat la lista de mai jos. Dacă tema ta e diferită, scrie-o în câmpul de
@@ -947,7 +922,7 @@ export default function Home() {
               <p className="eyebrow mb-3">Ce spun elevii</p>
               <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
                 Peste 300 de atestate.{" "}
-                <span className="serif italic text-gradient-emerald">Zero regrete.</span>
+                <span className="serif italic text-[var(--ink-muted)]">Zero regrete.</span>
               </h2>
             </div>
 
@@ -997,7 +972,7 @@ export default function Home() {
               <p className="eyebrow mb-3 text-[var(--ink-muted)]">Preț</p>
               <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-4">
                 Un preț simplu.{" "}
-                <span className="serif italic text-gradient-emerald">Fără surprize.</span>
+                <span className="serif italic text-[var(--ink-muted)]">Fără surprize.</span>
               </h2>
               <p className="text-[var(--ink-muted)] leading-relaxed">
                 O singură plată. Fără abonament. Fără costuri ascunse. Documentul rămâne al tău pe
@@ -1130,7 +1105,7 @@ export default function Home() {
             <div className="text-center mb-12">
               <p className="eyebrow mb-3">Întrebări frecvente</p>
               <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
-                Mai ai <span className="serif italic text-gradient-emerald">nelămuriri?</span>
+                Mai ai <span className="serif italic text-[var(--ink-muted)]">nelămuriri?</span>
               </h2>
             </div>
 
