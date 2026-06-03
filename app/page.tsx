@@ -220,26 +220,18 @@ function SectionReveal({ children, className }: { children: React.ReactNode; cla
 /* ─── Hero headline with text-reveal ────────────────────────────────── */
 
 function HeroHeadline() {
-  // "5–10 minute." is a single atomic unit (nbsp between "10" and "minute")
-  // so the dash and the word can never break onto separate lines.
-  // flat arrays of { char } so each char gets a unique --index without
-  // shared mutable state across .map calls.
+  // "5-10 minute." lives inside a whitespace-nowrap wrapper so the line
+  // breaker can't split it across rows. Without the wrapper, each char
+  // is its own inline-block and the period can wrap to a new line.
   const line1 = "Atestatul tău,";
-  const line2Words = ["gata", "în", "5–10 minute."];
+  const line2Lead = "gata în";
+  const atomicUnit = "5–10 minute.";
 
-  const flat1 = line1.split("").map((c) => c);
-  const flat2 = line2Words
-    .map((w) => w.split(""))
-    .reduce<string[]>((acc, chars, i) => {
-      if (i > 0) acc.push(" ");
-      acc.push(...chars);
-      return acc;
-    }, []);
+  const flat1 = line1.split("");
+  const leadChars = line2Lead.split("").filter((c) => c !== " ");
+  const unitChars = atomicUnit.split("").filter((c) => c !== " ");
 
   return (
-    // text-4xl base, sm:5xl (640px+), lg:5xl (1024px+ 2-col grid kicks in
-    // — left column is ~500px), xl:6xl (1280px+, more breathing room).
-    // The 5–10 minute unit is whitespace-nowrap so the dash never breaks.
     <h1 className="text-4xl sm:text-5xl xl:text-6xl font-bold tracking-tight leading-[1.05] mb-6">
       <span className="block">
         {flat1.map((char, i) => (
@@ -248,20 +240,32 @@ function HeroHeadline() {
             className="char-reveal"
             style={{ "--index": i } as React.CSSProperties}
           >
-            {char === " " ? " " : char}
+            {char === " " ? " " : char}
           </span>
         ))}
       </span>
       <span className="block text-[var(--accent-2)]">
-        {flat2.map((char, i) => (
+        {leadChars.map((char, i) => (
           <span
-            key={`l2-${i}`}
+            key={`lead-${i}`}
             className="char-reveal italic"
-            style={{ "--index": i + flat1.length } as React.CSSProperties}
+            style={{ "--index": flat1.length + i } as React.CSSProperties}
           >
-            {char === " " ? " " : char}
+            {char}
           </span>
         ))}
+        <span aria-hidden> </span>
+        <span className="whitespace-nowrap">
+          {unitChars.map((char, i) => (
+            <span
+              key={`unit-${i}`}
+              className="char-reveal italic"
+              style={{ "--index": flat1.length + leadChars.length + 1 + i } as React.CSSProperties}
+            >
+              {char === " " ? " " : char}
+            </span>
+          ))}
+        </span>
       </span>
     </h1>
   );
