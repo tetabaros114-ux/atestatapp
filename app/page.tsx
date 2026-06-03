@@ -220,52 +220,99 @@ function SectionReveal({ children, className }: { children: React.ReactNode; cla
 /* ─── Hero headline with text-reveal ────────────────────────────────── */
 
 function HeroHeadline() {
-  // "5-10 minute." lives inside a whitespace-nowrap wrapper so the line
-  // breaker can't split it across rows. Without the wrapper, each char
-  // is its own inline-block and the period can wrap to a new line.
+  // Chars (including spaces) are rendered as inline-block .char-reveal
+  // spans so the reveal animation can target each one. Without the space
+  // being its own span, "Atestatul" and "tau" would sit glued together
+  // (HTML collapses whitespace between inline-block children).
+  //
+  // "5–10 minute." is wrapped in a single whitespace-nowrap container so
+  // the line breaker can't split it across rows.
   const line1 = "Atestatul tău,";
-  const line2Lead = "gata în";
-  const atomicUnit = "5–10 minute.";
+  const line2 = "gata în 5–10 minute.";
+  const unitStr = "5–10 minute.";
 
-  const flat1 = line1.split("");
-  const leadChars = line2Lead.split("").filter((c) => c !== " ");
-  const unitChars = atomicUnit.split("").filter((c) => c !== " ");
+  type Entry = { ch: string; inUnit: boolean };
+  const build = (s: string): Entry[] => {
+    const out: Entry[] = [];
+    let i = 0;
+    while (i < s.length) {
+      if (s.startsWith(unitStr, i)) {
+        out.push({ ch: " ", inUnit: false });
+        for (const c of unitStr) {
+          out.push({ ch: c, inUnit: true });
+        }
+        i += unitStr.length;
+        continue;
+      }
+      out.push({ ch: s[i], inUnit: false });
+      i++;
+    }
+    return out;
+  };
+
+  const l1 = build(line1);
+  const l2 = build(line2);
+
+  // Render line 2 with the unit chars collected together so they can be
+  // wrapped in a single whitespace-nowrap container.
+  const renderLine2 = () => {
+    const chunks: React.ReactNode[] = [];
+    let buffer: { ch: string; origIdx: number }[] = [];
+    const flushBuffer = (startIdx: number) => {
+      if (buffer.length === 0) return;
+      chunks.push(
+        <span
+          key={`unit-wrap-${startIdx}`}
+          className="whitespace-nowrap"
+        >
+          {buffer.map((b) => (
+            <span
+              key={`u-${b.origIdx}`}
+              className="char-reveal italic"
+              style={{ "--index": l1.length + b.origIdx } as React.CSSProperties}
+            >
+              {b.ch}
+            </span>
+          ))}
+        </span>
+      );
+      buffer = [];
+    };
+    l2.forEach((e, i) => {
+      if (e.inUnit) {
+        buffer.push({ ch: e.ch, origIdx: i });
+      } else {
+        flushBuffer(i);
+        chunks.push(
+          <span
+            key={`c-${i}`}
+            className="char-reveal italic"
+            style={{ "--index": l1.length + i } as React.CSSProperties}
+          >
+            {e.ch}
+          </span>
+        );
+      }
+    });
+    flushBuffer(9999);
+    return chunks;
+  };
 
   return (
     <h1 className="text-4xl sm:text-5xl xl:text-6xl font-bold tracking-tight leading-[1.05] mb-6">
       <span className="block">
-        {flat1.map((char, i) => (
+        {l1.map((e, i) => (
           <span
             key={`l1-${i}`}
             className="char-reveal"
             style={{ "--index": i } as React.CSSProperties}
           >
-            {char === " " ? " " : char}
+            {e.ch}
           </span>
         ))}
       </span>
       <span className="block text-[var(--accent-2)]">
-        {leadChars.map((char, i) => (
-          <span
-            key={`lead-${i}`}
-            className="char-reveal italic"
-            style={{ "--index": flat1.length + i } as React.CSSProperties}
-          >
-            {char}
-          </span>
-        ))}
-        <span aria-hidden> </span>
-        <span className="whitespace-nowrap">
-          {unitChars.map((char, i) => (
-            <span
-              key={`unit-${i}`}
-              className="char-reveal italic"
-              style={{ "--index": flat1.length + leadChars.length + 1 + i } as React.CSSProperties}
-            >
-              {char === " " ? " " : char}
-            </span>
-          ))}
-        </span>
+        {renderLine2()}
       </span>
     </h1>
   );
