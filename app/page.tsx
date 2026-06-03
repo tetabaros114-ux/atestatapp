@@ -83,7 +83,7 @@ const FEATURES = [
     ),
   },
   {
-    title: "Gata în 5–10 minute",
+    title: "Gata în 5–10 minute",
     desc: "AI-ul caută firma, scrie conținutul și construiește fișierul Word. Tu doar descarci.",
     icon: (
       <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5 12 3m0 0 8.25 10.5M12 3v18m9-6.75H3" />
@@ -237,9 +237,10 @@ function HeroHeadline() {
     }, []);
 
   return (
-    // text-5xl at md, text-6xl at lg — keeps the 2-col grid (lg) left column
-    // (~530px) wide enough to fit "gata în 5–10 minute." on one line.
-    <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight leading-[1.05] mb-6">
+    // text-4xl base, sm:5xl (640px+), lg:5xl (1024px+ 2-col grid kicks in
+    // — left column is ~500px), xl:6xl (1280px+, more breathing room).
+    // The 5–10 minute unit is whitespace-nowrap so the dash never breaks.
+    <h1 className="text-4xl sm:text-5xl xl:text-6xl font-bold tracking-tight leading-[1.05] mb-6">
       <span className="block">
         {flat1.map((char, i) => (
           <span
