@@ -217,107 +217,24 @@ function SectionReveal({ children, className }: { children: React.ReactNode; cla
   );
 }
 
-/* ─── Hero headline with text-reveal ────────────────────────────────── */
+/* ─── Hero headline ────────────────────────────────────────────── */
 
 function HeroHeadline() {
-  // Chars (including spaces) are rendered as inline-block .char-reveal
-  // spans so the reveal animation can target each one. Without the space
-  // being its own span, "Atestatul" and "tau" would sit glued together
-  // (HTML collapses whitespace between inline-block children).
-  //
-  // "5–10 minute." is wrapped in a single whitespace-nowrap container so
-  // the line breaker can't split it across rows.
-  const line1 = "Atestatul tău,";
-  const line2 = "gata în 5–10 minute.";
-  const unitStr = "5–10 minute.";
-
-  type Entry = { ch: string; inUnit: boolean };
-  const build = (s: string): Entry[] => {
-    const out: Entry[] = [];
-    let i = 0;
-    while (i < s.length) {
-      if (s.startsWith(unitStr, i)) {
-        for (const c of unitStr) {
-          out.push({ ch: c, inUnit: true });
-        }
-        i += unitStr.length;
-        continue;
-      }
-      out.push({ ch: s[i], inUnit: false });
-      i++;
-    }
-    return out;
-  };
-
-  const l1 = build(line1);
-  const l2 = build(line2);
-
-  // Render line 2 with the unit chars collected together so they can be
-  // wrapped in a single whitespace-nowrap container.
-  const renderLine2 = () => {
-    const chunks: React.ReactNode[] = [];
-    let buffer: { ch: string; origIdx: number }[] = [];
-    const flushBuffer = (startIdx: number) => {
-      if (buffer.length === 0) return;
-      chunks.push(
-        <span
-          key={`unit-wrap-${startIdx}`}
-          className="whitespace-nowrap"
-        >
-          {buffer.map((b) => (
-            <span
-              key={`u-${b.origIdx}`}
-              className="char-reveal italic"
-              style={{ "--index": l1.length + b.origIdx } as React.CSSProperties}
-            >
-              {b.ch}
-            </span>
-          ))}
-        </span>
-      );
-      buffer = [];
-    };
-    l2.forEach((e, i) => {
-      if (e.inUnit) {
-        buffer.push({ ch: e.ch, origIdx: i });
-      } else {
-        flushBuffer(i);
-        chunks.push(
-          <span
-            key={`c-${i}`}
-            className="char-reveal italic"
-            style={{ "--index": l1.length + i } as React.CSSProperties}
-          >
-            {e.ch}
-          </span>
-        );
-      }
-    });
-    flushBuffer(0);
-    return chunks;
-  };
-
+  // Render as plain JSX text (no per-char animation). Each space between
+  // words sits in JSX text content, NOT inside an inline-block span — this
+  // avoids the "glued-together words" bug we kept hitting with char spans.
+  // The atomic unit "5–10 minute." is wrapped in whitespace-nowrap with NBSP
+  // so the period can never wrap to a new line.
   return (
-    <h1 className="text-4xl sm:text-5xl xl:text-6xl font-bold tracking-tight leading-[1.05] mb-6">
-      <span className="block">
-        {l1.map((e, i) => (
-          <span
-            key={`l1-${i}`}
-            className="char-reveal"
-            style={{ "--index": i } as React.CSSProperties}
-          >
-            {e.ch}
-          </span>
-        ))}
-      </span>
-      <span className="block text-[var(--accent-2)]">
-        {renderLine2()}
+    <h1 className="text-4xl sm:text-5xl xl:text-6xl font-bold tracking-tight leading-[1.05] mb-6 text-balance">
+      <span className="block">Atestatul tău,</span>
+      <span className="block text-[var(--accent-2)] italic">
+        gata în{" "}
+        <span className="whitespace-nowrap">5–10 minute.</span>
       </span>
     </h1>
   );
 }
-
-/* ─── Document preview (re-skinned for dark) ────────────────────────── */
 
 function DocumentPreview() {
   return (
@@ -325,7 +242,7 @@ function DocumentPreview() {
       initial={{ opacity: 0, y: 30, rotateX: 8 }}
       animate={{ opacity: 1, y: 0, rotateX: 0 }}
       transition={{ duration: 0.8, ease: [0.23, 1, 0.32, 1], delay: 1.0 }}
-      className="relative"
+      className="relative mx-auto max-w-[480px] xl:max-w-none"
     >
       {/* Soft emerald glow halo behind */}
       <div
@@ -338,7 +255,7 @@ function DocumentPreview() {
         aria-hidden
       />
 
-      <div className="relative float" style={{ animationDelay: "0.5s" }}>
+      <div className="relative">
         {/* Stack of papers effect */}
         <div
           className="absolute inset-0 translate-x-3 translate-y-3 bg-[#FAFAFA] rounded-lg opacity-30"
@@ -409,104 +326,7 @@ function DocumentPreview() {
           </div>
         </div>
 
-        {/* Annotation labels — sit in the dark negative space, point to a
-            specific line on the document, slightly rotated for organic feel. */}
-        <motion.div
-          initial={{ opacity: 0, x: -10, y: 6, rotate: 0 }}
-          animate={{ opacity: 1, x: 0, y: 0, rotate: -3 }}
-          transition={{ delay: 0.95, duration: 0.55, ease: [0.23, 1, 0.32, 1] }}
-          className="absolute -left-12 top-8 z-20 hidden xl:block"
-        >
-          {/* connector line + dot pointing into the document */}
-          <svg
-            className="absolute left-full top-1/2 -translate-y-1/2 pointer-events-none"
-            width="32"
-            height="20"
-            viewBox="0 0 32 20"
-            fill="none"
-            aria-hidden
-          >
-            <line
-              x1="0"
-              y1="10"
-              x2="26"
-              y2="10"
-              stroke="currentColor"
-              strokeWidth="1"
-              strokeDasharray="2 3"
-              className="text-[var(--ink-faint)]"
-            />
-            <circle cx="30" cy="10" r="2.5" className="fill-[var(--accent)]" />
-            <circle cx="30" cy="10" r="5" className="fill-[var(--accent)] opacity-25">
-              <animate attributeName="r" values="3;7;3" dur="2.4s" repeatCount="indefinite" />
-              <animate attributeName="opacity" values="0.35;0;0.35" dur="2.4s" repeatCount="indefinite" />
-            </circle>
-          </svg>
-          <div className="glass rounded-lg shadow-2xl px-3 py-2 text-[11px] leading-tight flex items-center gap-2.5 border-[var(--border-strong)]">
-            <div className="w-1.5 h-1.5 rounded-full bg-[var(--accent)] glow-pulse" />
-            <div className="flex flex-col">
-              <span className="font-mono text-[9px] uppercase tracking-wider text-[var(--ink-faint)]">
-                Cap. III
-              </span>
-              <span>
-                <span className="font-semibold text-[var(--ink)]">25+</span>{" "}
-                <span className="text-[var(--ink-muted)]">înregistrări contabile</span>
-              </span>
-            </div>
-          </div>
-        </motion.div>
 
-        <motion.div
-          initial={{ opacity: 0, x: 10, y: -6, rotate: 0 }}
-          animate={{ opacity: 1, x: 0, y: 0, rotate: 2.5 }}
-          transition={{ delay: 1.15, duration: 0.55, ease: [0.23, 1, 0.32, 1] }}
-          className="absolute -right-12 bottom-12 z-20 hidden xl:block"
-        >
-          {/* connector line + dot pointing into the document */}
-          <svg
-            className="absolute right-full top-1/2 -translate-y-1/2 pointer-events-none"
-            width="32"
-            height="20"
-            viewBox="0 0 32 20"
-            fill="none"
-            aria-hidden
-          >
-            <line
-              x1="0"
-              y1="10"
-              x2="26"
-              y2="10"
-              stroke="currentColor"
-              strokeWidth="1"
-              strokeDasharray="2 3"
-              className="text-[var(--ink-faint)]"
-            />
-            <circle cx="30" cy="10" r="2.5" className="fill-[var(--accent)]" />
-            <circle cx="2" cy="10" r="5" className="fill-[var(--accent)] opacity-25">
-              <animate attributeName="r" values="3;7;3" dur="2.4s" repeatCount="indefinite" />
-              <animate attributeName="opacity" values="0.35;0;0.35" dur="2.4s" repeatCount="indefinite" />
-            </circle>
-          </svg>
-          <div className="glass rounded-lg shadow-2xl px-3 py-2 text-[11px] leading-tight flex items-center gap-2.5 border-[var(--border-strong)]">
-            <svg
-              className="w-3 h-3 text-[var(--accent)] shrink-0"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M20 6 9 17l-5-5" />
-            </svg>
-            <div className="flex flex-col">
-              <span className="font-mono text-[9px] uppercase tracking-wider text-[var(--ink-faint)]">
-                Conform
-              </span>
-              <span className="font-semibold text-[var(--ink)]">Format MEN</span>
-            </div>
-          </div>
-        </motion.div>
       </div>
     </motion.div>
   );
@@ -665,7 +485,9 @@ export default function Home() {
                 <span className="eyebrow-emerald">Generat cu AI · Format MEN</span>
               </motion.div>
 
-              <HeroHeadline />
+              <motion.div variants={fadeUp} custom={1}>
+                <HeroHeadline />
+              </motion.div>
 
               <motion.p
                 variants={fadeUp}
@@ -683,8 +505,8 @@ export default function Home() {
                 custom={4}
                 className="flex flex-col sm:flex-row gap-3 mb-6"
               >
-                <Link href="/genereaza" className="btn-accent text-base py-4 px-6">
-                  Vreau atestatul meu — 20 EUR
+                <Link href="/genereaza" className="btn-accent text-base py-4 px-6 whitespace-nowrap">
+                  Vreau atestatul meu
                   <svg
                     className="w-4 h-4"
                     viewBox="0 0 24 24"
@@ -697,7 +519,7 @@ export default function Home() {
                     <path d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
                   </svg>
                 </Link>
-                <a href="#cum-functioneaza" className="btn-secondary text-base py-4 px-6">
+                <a href="#cum-functioneaza" className="btn-secondary text-base py-4 px-5 whitespace-nowrap">
                   Vezi cum funcționează
                 </a>
               </motion.div>
