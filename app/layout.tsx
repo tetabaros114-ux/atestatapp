@@ -24,9 +24,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "AtestatApp.ro — Atestatul tău profesional, gata în 3 minute",
+  title: "AtestatApp.ro — Atestatul tău profesional, gata în 5-10 minute",
   description:
-    "Generează atestatul profesional pentru liceu economic în 3 minute. 10 EUR, document Word complet de 55-60 pagini, contabilitate reală și anexe oficiale. Banii înapoi dacă nu ești mulțumit.",
+    "Generează atestatul profesional pentru liceu economic în 5-10 minute. 20 EUR, document Word complet de 55-60 pagini, contabilitate reală și anexe oficiale. Banii înapoi dacă nu ești mulțumit.",
   keywords: [
     "atestat profesional",
     "atestat liceu",
@@ -37,9 +37,9 @@ export const metadata: Metadata = {
     "atestat 2026",
   ],
   openGraph: {
-    title: "AtestatApp.ro — Atestatul tău profesional, gata în 3 minute",
+    title: "AtestatApp.ro — Atestatul tău profesional, gata în 5-10 minute",
     description:
-      "10 EUR · Document Word complet · 55-60 pagini · Contabilitate reală · Gata în 3 minute",
+      "20 EUR · Document Word complet · 55-60 pagini · Contabilitate reală · Gata în 5-10 minute",
     locale: "ro_RO",
     type: "website",
   },

@@ -176,7 +176,7 @@ export default function SuccessPage() {
                     Se generează atestatul tău...
                   </h1>
                   <p className="text-[var(--ink-muted)]">
-                    AI-ul nostru scrie cele 55-60 de pagini. Poate dura 3-5 minute.
+                    AI-ul nostru scrie cele 55-60 de pagini. Durează 5–10 minute, în funcție de complexitate.
                   </p>
                 </div>
 

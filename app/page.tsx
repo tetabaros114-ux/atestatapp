@@ -53,7 +53,7 @@ const PROOF = [
     name: "Mihai S.",
     school: "Liceul Economic Brașov",
     quote:
-      "Am folosit-o pentru 2 colegi. Ambii au luat note mari. Investiția de 10 EUR merită fiecare ban.",
+      "Am folosit-o pentru 2 colegi. Ambii au luat note mari. Investiția de 20 EUR merită fiecare ban.",
     rating: 5,
   },
   {
@@ -83,7 +83,7 @@ const FEATURES = [
     ),
   },
   {
-    title: "Gata în 3 minute",
+    title: "Gata în 5–10 minute",
     desc: "AI-ul caută firma, scrie conținutul și construiește fișierul Word. Tu doar descarci.",
     icon: (
       <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5 12 3m0 0 8.25 10.5M12 3v18m9-6.75H3" />
@@ -129,7 +129,7 @@ const STEPS = [
   {
     n: "2",
     title: "AI-ul nostru scrie atestatul",
-    desc: "În aproximativ 3 minute, AI-ul cercetează firma și scrie toate cele 55-60 de pagini.",
+    desc: "În aproximativ 5–10 minute, AI-ul cercetează firma și scrie toate cele 55-60 de pagini.",
     bullets: ["Caută datele firmei automat", "Scrie 4 capitole complete", "Construiește anexele contabile"],
   },
   {
@@ -143,7 +143,7 @@ const STEPS = [
 const FAQ = [
   {
     q: "Cât durează generarea?",
-    a: "Aproximativ 3 minute. AI-ul caută datele firmei (CIF, CAEN, angajați) din surse publice și scrie documentul în paralel. Uneori poate dura până la 5 minute dacă firma e mică și greu de găsit online.",
+    a: "Între 5 și 10 minute, în funcție de complexitate. AI-ul caută datele firmei (CIF, CAEN, angajați) din surse publice și scrie documentul în paralel. Firmele mari se generează mai repede; cele mici sau greu de găsit online pot dura până la 10 minute.",
   },
   {
     q: "Ce conține exact documentul?",
@@ -221,7 +221,7 @@ function SectionReveal({ children, className }: { children: React.ReactNode; cla
 
 function HeroHeadline() {
   const headline = "Atestatul tău,";
-  const headline2 = "gata în 3 minute.";
+  const headline2 = "gata în 5–10 minute.";
   return (
     <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight leading-[1.05] mb-6">
       <span className="block">
@@ -624,7 +624,7 @@ export default function Home() {
                 className="text-lg text-[var(--ink-muted)] leading-relaxed mb-8 max-w-xl"
               >
                 Completezi un scurt formular, plătești o singură dată{" "}
-                <strong className="text-[var(--ink)]">10 EUR</strong>, și primești un document Word
+                <strong className="text-[var(--ink)]">20 EUR</strong>, și primești un document Word
                 complet —{" "}
                 <strong className="text-[var(--ink)]">55–60 de pagini</strong> formatate conform
                 cerințelor MEN, cu contabilitate reală și anexe oficiale.
@@ -685,7 +685,7 @@ export default function Home() {
                   >
                     <path d="M20 6 9 17l-5-5" />
                   </svg>
-                  Gata în 3 minute
+                  Gata în 5–10 minute
                 </span>
                 <span className="inline-flex items-center gap-1.5">
                   <svg
@@ -819,7 +819,7 @@ export default function Home() {
 
             <motion.div variants={fadeUp} className="text-center mt-12">
               <Link href="/genereaza" className="btn-primary">
-                Începe acum — 10 EUR
+                Începe acum — 20 EUR
                 <svg
                   className="w-3.5 h-3.5"
                   viewBox="0 0 24 24"
@@ -1160,15 +1160,15 @@ export default function Home() {
               <div className="relative">
                 <p className="eyebrow mb-3">Gata să începi?</p>
                 <h2 className="text-3xl md:text-5xl font-bold tracking-tight mb-5 leading-tight">
-                  În 3 minute ai atestatul.{" "}
+                  În 5–10 minute ai atestatul.{" "}
                   <span className="serif italic text-gradient-emerald">Promitem.</span>
                 </h2>
                 <p className="text-[var(--ink-muted)] mb-8 max-w-md mx-auto">
-                  2 minute completezi formularul. 3 minute aștepți. 0 nopți nedormite. Încearcă acum
+                  2 minute completezi formularul. 5–10 minute aștepți. 0 nopți nedormite. Încearcă acum
                   — banii înapoi dacă nu e mulțumit.
                 </p>
                 <Link href="/genereaza" className="btn-accent text-base py-4 px-8">
-                  Începe acum — 10 EUR
+                  Începe acum — 20 EUR
                   <svg
                     className="w-4 h-4"
                     viewBox="0 0 24 24"
@@ -1182,7 +1182,7 @@ export default function Home() {
                   </svg>
                 </Link>
                 <p className="text-xs text-[var(--ink-soft)] mt-4">
-                  10 EUR · fără abonament · returnare 24h · suport în română
+                  20 EUR · fără abonament · returnare 24h · suport în română
                 </p>
               </div>
             </div>

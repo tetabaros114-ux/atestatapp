@@ -186,7 +186,7 @@ export default function GenereazaPage() {
         </Link>
         <span className="hidden sm:inline-flex items-center gap-1.5 text-xs text-[var(--ink-muted)]">
           <span className="dot bg-[var(--accent)]" />
-          Plătești doar 10 EUR
+          Plătești doar 20 EUR
           <span className="text-[var(--ink-faint)] mx-1">·</span>
           <span className="hidden md:inline">2 minute de completat</span>
         </span>
@@ -461,12 +461,12 @@ export default function GenereazaPage() {
           <div className="flex items-center justify-center gap-6 mb-5 text-sm text-[var(--ink-muted)]">
             <span className="inline-flex items-center gap-1.5">
               <svg className="w-4 h-4 text-[var(--accent)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5" /></svg>
-              10 EUR · o singură plată
+              20 EUR · o singură plată
             </span>
             <span className="w-px h-4 bg-[var(--border)]" />
             <span className="inline-flex items-center gap-1.5">
               <svg className="w-4 h-4 text-[var(--accent)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5" /></svg>
-              Gata în 3 minute
+              Gata în 5–10 minute
             </span>
             <span className="w-px h-4 bg-[var(--border)]" />
             <span className="inline-flex items-center gap-1.5">
@@ -490,7 +490,7 @@ export default function GenereazaPage() {
               </>
             ) : (
               <>
-                Continuă spre plată — 10 EUR
+                Continuă spre plată — 20 EUR
                 <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" /></svg>
               </>
             )}
@@ -507,7 +507,7 @@ export default function GenereazaPage() {
       <div className="sticky-mobile-cta">
         <div>
           <div className="text-xs text-[var(--ink-soft)]">Total de plată</div>
-          <div className="text-lg font-bold text-[var(--ink)]">10 EUR</div>
+          <div className="text-lg font-bold text-[var(--ink)]">20 EUR</div>
         </div>
         <button
           type="button"
